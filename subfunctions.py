@@ -55,7 +55,22 @@ def get_mass(rover: dict) -> float:
         Rover mass in [kg]
 
     '''
-    pass
+    # Input Validation
+    if not isinstance(rover, dict):
+        raise TypeError('Input argument rover must be a dictionary.')
+
+    # Wheel Assembly Calculation
+    wheel = rover['wheel_assembly']['wheel']['mass']
+    speed_reducer = rover['wheel_assembly']['speed_reducer']['mass']
+    motor = rover['wheel_assembly']['motor']['mass']
+    wheel_assembly = wheel + speed_reducer + motor
+
+    # Other Masses
+    chassis = rover['chassis']['mass']
+    science_payload = rover['science_payload']['mass']
+    power_subsys = rover['power_subsys']['mass']
+
+    return 6 * wheel_assembly + chassis + science_payload + power_subsys
 
 
 def get_gear_ratio(speed_reducer: dict) -> float:
@@ -170,6 +185,10 @@ def F_drive(omega: np.ndarray, rover: dict) -> np.ndarray:
     return Fd
 
 
+def F_gravity(terrain_angle: np.ndarray, rover: dict, planet: dict):
+    pass
+
+
 def F_rolling(omega: np.ndarray, terrain_angle: np.ndarray, rover: dict, planet: dict, Crr: float) -> np.ndarray:
     '''
     This function computes the component of force due to rolling resistance, in Newtons, acting in the direction of
@@ -236,7 +255,15 @@ def F_net(omega: np.ndarray, terrain_angle: np.ndarray, rover: dict, planet: dic
     Fnet: numpy array
         Array of net forces [N]
     '''
-    pass
+
+    # Force Calculations
+    drive = F_drive(omega, rover)
+    rolling = F_rolling(omega, terrain_angle, rover, planet, Crr)
+    gravity = F_gravity(terrain_angle, rover, planet)
+
+    # Force in the direction of motion
+    return drive - rolling + gravity*np.sin(terrain_angle)
+
 
 
 '''
