@@ -1,7 +1,7 @@
 import numpy as np
-from typing import Union
-# This is a template for the Marvin dictionary
-# I just converted the text from the project description into a dictionary
+
+# The following dict is the MARVIN_DICT specified in the project description
+# not sure if it will live here forever but it's here for now
 MARVIN_DICT = {
     'rover': {
         'wheel_assembly': {
@@ -100,7 +100,7 @@ def tau_dcmotor(omega: np.ndarray, motor: dict) -> np.ndarray:
     '''
 
     #### INPUT CHECKING ####
-    
+
     # if input is arraylike but not a numpy array, convert to a numpy array
     if not isinstance(omega, np.ndarray):
         try:
