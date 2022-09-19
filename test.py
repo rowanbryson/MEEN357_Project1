@@ -73,5 +73,60 @@ class TestTauDcMotor(unittest.TestCase):
                 self.assertRaises(expected, tau_dcmotor, omega, motor)
 
 
+class TestGetGearRatio(unittest.TestCase):
+    # add default_speed_reducer as a class attribute
+    def setUp(self):
+        self.default_speed_reducer = MARVIN_DICT['rover']['wheel_assembly']['speed_reducer']
+
+    # test that the function returns the correct value
+    def test_get_gear_ratio_accuracy(self):
+        test_cases = [
+            {
+                'speed_reducer': self.default_speed_reducer,
+                'expected': 3.062500
+            },
+            {
+                'speed_reducer': {
+                    'type': 'reverted',
+                    'diam_pinion': 0.03,
+                    'diam_gear': 0.07,
+                    'mass': 1.5,
+                },
+                'expected': 5.444444444
+            }
+        ]
+        # run subtests for each input
+        for test_case in test_cases:
+            speed_reducer, expected = test_case['speed_reducer'], test_case['expected']
+            with self.subTest(speed_reducer=speed_reducer):
+                # calculate the actual output
+                actual = get_gear_ratio(speed_reducer)
+                # check that the actual output matches the expected output to within 1e-6
+                self.assertTrue(np.allclose(actual, expected, atol=1e-6))
+
+
+class TestFDrive(unittest.TestCase):
+    def setUp(self):
+        self.default_rover = MARVIN_DICT['rover']
+
+    # test that the function returns the correct value
+    def test_F_drive_accuracy(self):
+        test_cases = [
+            {
+                'rover': self.default_rover,
+                'omega': np.array([1]),
+                'expected': np.array([1278.72807])
+            }
+        ]
+        # run subtests for each input
+        for test_case in test_cases:
+            rover, omega, expected = test_case['rover'], test_case['omega'], test_case['expected']
+            with self.subTest(rover=rover, omega=omega):
+                # calculate the actual output
+                actual = F_drive(omega, rover)
+                # check that the actual output matches the expected output to within 1e-6
+                self.assertTrue(np.allclose(actual, expected, atol=1e-6))
+
+
 if __name__ == '__main__':
     unittest.main()

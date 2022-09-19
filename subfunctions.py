@@ -74,7 +74,10 @@ def get_gear_ratio(speed_reducer: dict) -> float:
     gear_ratio : scalar
         Speed ratio from input pinion shaft to output gear shaft. Unitless.
     '''
-    pass
+
+    #  TODO add input checking
+
+    return (speed_reducer['diam_gear'] / speed_reducer['diam_pinion'])**2
 
 
 def tau_dcmotor(omega: np.ndarray, motor: dict) -> np.ndarray:
@@ -159,8 +162,12 @@ def F_drive(omega: np.ndarray, rover: dict) -> np.ndarray:
     Fd: numpy array
         Array of drive forces [N]
     '''
-    pass
+    gear_ratio = get_gear_ratio(rover['wheel_assembly']['speed_reducer'])
+    wheel_radius = rover['wheel_assembly']['wheel']['radius']
 
+    tau = tau_dcmotor(omega, rover['wheel_assembly']['motor'])
+    Fd = tau * gear_ratio / wheel_radius
+    return Fd
 
 
 def F_rolling(omega: np.ndarray, terrain_angle: np.ndarray, rover: dict, planet: dict, Crr: float) -> np.ndarray:
