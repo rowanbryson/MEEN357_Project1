@@ -1,4 +1,5 @@
 import numpy as np
+from typing import Union
 # This is a template for the Marvin dictionary
 # I just converted the text from the project description into a dictionary
 MARVIN_DICT = {
@@ -97,7 +98,44 @@ def tau_dcmotor(omega: np.ndarray, motor: dict) -> np.ndarray:
     tau: numpy array
         Torque at motor shaft [Nm]. Return argument is same size as first input argument.
     '''
-    pass
+
+    #### INPUT CHECKING ####
+    
+    # if input is arraylike but not a numpy array, convert to a numpy array
+    if not isinstance(omega, np.ndarray):
+        try:
+            if isinstance(omega, (int, float)):
+                omega = np.array([omega], dtype=np.float64)
+            else:
+                omega = np.array(omega, dtype=np.float64)
+        except:
+            raise TypeError('Input argument omega must be arraylike and convertible to a numpy array of floats.')
+    # check that motor dict is valid format
+    if not isinstance(motor, dict):
+        raise TypeError('Input argument motor must be a dictionary.')
+    if not all([key in motor for key in ['torque_stall', 'torque_noload', 'speed_noload']]):
+        raise ValueError('Input argument motor must contain keys "torque_stall", "torque_noload", and "speed_noload".')
+    if not all([isinstance(motor[key], (int, float)) for key in ['torque_stall', 'torque_noload', 'speed_noload']]):
+        raise TypeError('"torque_stall", "torque_noload", and "speed_noload" must be numeric scalars.')
+
+    #### FUNCTION BODY ####
+
+    # initialize tau as a numpy array of the same size as omega with float values of 0
+    tau = np.zeros_like(omega, dtype=float)
+    # define the function to calculate the torque under normal conditions
+    main_tau_func = lambda omega: motor['torque_stall'] - (motor['torque_stall'] - motor['torque_noload']) * (omega / motor['speed_noload'])
+
+    # iterate through omega and calculate the torque at each speed
+    for i in range(len(omega)):
+        # see the pdf for the logic behind this
+        # 'omega > noload_speed' and 'omega < 0' are special cases
+        if 0 <= float(omega[i]) <= motor['speed_noload']:
+            tau[i] = main_tau_func(omega[i])
+        elif omega[i] > motor['speed_noload']:
+            tau[i] = 0
+        else:  # omega < 0
+            tau[i] = motor['torque_stall']
+    return tau
 
 
 def F_drive(omega: np.ndarray, rover: dict) -> np.ndarray:
