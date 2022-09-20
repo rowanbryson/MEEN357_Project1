@@ -1,6 +1,27 @@
 from subfunctions import *
 import unittest
 
+# class TestWierd(unittest.TestCase):
+#     # this is an example of how to do a unit test
+#     def test_wierd(self):
+
+#         function_output = wierd()
+#         expected_output = 7
+
+#         assert function_output == expected_output
+
+
+# class TestGetMass(unittest.TestCase):
+#     # this is an example of how to do a unit test
+#     def test_get_mass(self):
+#         rover = MARVIN_DICT['rover']
+
+#         function_output = get_mass(rover)
+#         expected_output = 9
+
+#         assert function_output == expected_output
+    
+
 class TestTauDcMotor(unittest.TestCase):
     # add default_motor as a class attribute
     def setUp(self):
@@ -43,6 +64,7 @@ class TestTauDcMotor(unittest.TestCase):
                 actual = tau_dcmotor(omega, motor)
                 # check that the actual output matches the expected output to within 1e-6
                 self.assertTrue(np.allclose(actual, expected, atol=1e-6))
+
 
     # test that the function raises an error as designed when the input is invalid
     def test_tau_dcmotor_input_checking(self):
