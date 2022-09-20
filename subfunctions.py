@@ -194,11 +194,13 @@ def F_drive(omega: np.ndarray, rover: dict) -> np.ndarray:
     wheel_radius = rover['wheel_assembly']['wheel']['radius']
 
     tau = tau_dcmotor(omega, rover['wheel_assembly']['motor'])
-    Fd = tau * gear_ratio / wheel_radius
+    # multiply by 6 because there are 6 wheels
+    Fd = 6 * tau * gear_ratio / wheel_radius
     return Fd
 
 
 def F_gravity(terrain_angle: np.ndarray, rover: dict, planet: dict):
+
     #check if rover and planet are dictionairies
     if not isinstance(rover, dict) or not isinstance(planet, dict):
         raise Exception("The rover and planet attributes must be dictionaries.")
@@ -354,5 +356,8 @@ def F_net(omega: np.ndarray, terrain_angle: np.ndarray, rover: dict, planet: dic
     # Force in the direction of motion
     return drive - rolling + gravity*np.sin(terrain_angle)
 
+
+def wierd():
+    return 10
 
 ## kayla
