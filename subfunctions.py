@@ -307,3 +307,6 @@ def F_net(omega: np.ndarray, terrain_angle: np.ndarray, rover: dict, planet: dic
 
     # Force in the direction of motion
     return drive - rolling + gravity*np.sin(terrain_angle)
+
+
+## kayla
