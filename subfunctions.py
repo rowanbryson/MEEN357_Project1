@@ -198,7 +198,19 @@ def F_drive(omega: np.ndarray, rover: dict) -> np.ndarray:
 
 
 def F_gravity(terrain_angle: np.ndarray, rover: dict, planet: dict):
-    pass
+    if not isinstance(rover, dict) or not isinstance(planet, dict):
+        raise Exception("The rover and planet attributes must be dictionaries.")
+    if not isinstance(terrain_angle, list):
+        raise Exception("The terrain angle must be in a list/array.")
+    Fgt = []
+    for x in terrain_angle:
+        if not isinstance(x, int) and not isinstance(x, float):
+            raise Exception("The terrain angle must be a scalar or vector.")
+        if x < -75 or x > 75:
+            raise Exception("All terrain angles must be between -75 and 75 degrees.")
+        gravity_force = (planet['g'])*np.cos(x)*get_mass(rover)*(-1)
+        Fgt.append(gravity_force)
+    return Fgt
 
 
 def F_rolling(omega: np.ndarray, terrain_angle: np.ndarray, rover: dict, planet: dict, Crr: float) -> np.ndarray:
