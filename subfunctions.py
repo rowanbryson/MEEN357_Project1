@@ -56,8 +56,10 @@ def get_mass(rover: dict) -> float:
 
     '''
     # Input Validation
+
+    # (a) input is dict
     if not isinstance(rover, dict):
-        raise TypeError('Input argument rover must be a dictionary.')
+        raise Exception('Input argument must be a dictionary.')
 
     # Wheel Assembly Calculation
     wheel = rover['wheel_assembly']['wheel']['mass']
@@ -70,6 +72,7 @@ def get_mass(rover: dict) -> float:
     science_payload = rover['science_payload']['mass']
     power_subsys = rover['power_subsys']['mass']
 
+    # Calculation / Output
     return 6 * wheel_assembly + chassis + science_payload + power_subsys
 
 
@@ -90,8 +93,17 @@ def get_gear_ratio(speed_reducer: dict) -> float:
         Speed ratio from input pinion shaft to output gear shaft. Unitless.
     '''
 
-    #  TODO add input checking
+    # Input Validation
 
+    # (a) input is dict
+    if not isinstance(speed_reducer, dict):
+        raise Exception('Input argument must be a dictionary.')
+
+    # Comparison
+    if not speed_reducer['type'].lower() == 'reverted':
+        raise Exception('get_gear_ratio does not currently support speed reducer types other than reverted')
+
+    # Calculation / Output
     return (speed_reducer['diam_gear'] / speed_reducer['diam_pinion'])**2
 
 
@@ -256,6 +268,38 @@ def F_net(omega: np.ndarray, terrain_angle: np.ndarray, rover: dict, planet: dic
         Array of net forces [N]
     '''
 
+    # Input Validation
+
+    # (a) first and second arguments are a scalar or vector
+    if not isinstance(omega, np.ndarray) or isinstance(omega, (int, float)):
+        raise Exception('First argument should be array or scalar.')
+    if not isinstance(terrain_angle, np.ndarray) or isinstance(terrain_angle, (int, float)):
+        raise Exception('Second argument should be array or scalar.')
+
+    # (a) first and second arguments are equal size
+    if not (omega.size == terrain_angle.size):
+        raise Exception('First and Second argument not same size')
+
+    # (b) elements of second are between -75 and 75
+    outside_range = False
+    for i in terrain_angle:
+        if i < -75 or i > 75:
+            outside_range = True
+    if outside_range is True:
+        raise Exception("Second argument contains a value less than -75deg or greater than 75deg")
+
+    # (c) third and fourth are dict
+    if not isinstance(rover, dict):
+        raise Exception("Third argument is not a dictionary")
+    if not isinstance(planet, dict):
+        raise Exception("Fourth argument is not a dictionary")
+
+    # (d) fifth is positive scalar
+    if not isinstance(Crr, (int, float)):
+        raise Exception("Fifth argument should be a scalar")
+    if not Crr > 0:
+        raise Exception("Fifth argument should be positive")
+
     # Force Calculations
     drive = F_drive(omega, rover)
     rolling = F_rolling(omega, terrain_angle, rover, planet, Crr)
@@ -263,9 +307,3 @@ def F_net(omega: np.ndarray, terrain_angle: np.ndarray, rover: dict, planet: dic
 
     # Force in the direction of motion
     return drive - rolling + gravity*np.sin(terrain_angle)
-
-
-
-'''
-Yo -Andrew
-'''
