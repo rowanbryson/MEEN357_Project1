@@ -1,4 +1,5 @@
 import numpy as np
+import math
 
 # The following dict is the MARVIN_DICT specified in the project description
 # not sure if it will live here forever but it's here for now
@@ -198,17 +199,27 @@ def F_drive(omega: np.ndarray, rover: dict) -> np.ndarray:
 
 
 def F_gravity(terrain_angle: np.ndarray, rover: dict, planet: dict):
+    #check if rover and planet are dictionairies
     if not isinstance(rover, dict) or not isinstance(planet, dict):
         raise Exception("The rover and planet attributes must be dictionaries.")
-    if not isinstance(terrain_angle, list):
-        raise Exception("The terrain angle must be in a list/array.")
-    Fgt = []
-    for x in terrain_angle:
-        if not isinstance(x, int) and not isinstance(x, float):
+
+    #check if terrain angle is a np array
+    if not isinstance(terrain_angle, np.ndarray):
+        raise Exception("The terrain angle must be in anarray.")
+
+    #adds the gravity force to empty array for each terrain angle 
+    Fgt = np.array()
+    for i in range(len(terrain_angle)):
+
+        #check for terrain angle type and range
+        if not isinstance(terrain_angle[i], (float, int)):
             raise Exception("The terrain angle must be a scalar or vector.")
-        if x < -75 or x > 75:
+        if terrain_angle[i] < -75 or terrain_angle[i] > 75:
             raise Exception("All terrain angles must be between -75 and 75 degrees.")
-        gravity_force = (planet['g'])*np.cos(x)*get_mass(rover)*(-1)
+
+        #F_gravity = (-3.72)*cos(terrainangle)*(total mass of rover)
+        gravity_force = (planet['g'])*np.cos(terrain_angle[i])*get_mass(rover)*(-1)
+
         Fgt.append(gravity_force)
     return Fgt
 
@@ -246,7 +257,30 @@ def F_rolling(omega: np.ndarray, terrain_angle: np.ndarray, rover: dict, planet:
     Frr: numpy array
         Array of rolling resistance forces [N]
     '''
-    pass
+    #Check for inital conditions
+
+    if not isinstance(rover, dict) or not isinstance(planet, dict):
+        raise Exception("The rover and planet attributes must be dictionaries.")
+    if not isinstance(terrain_angle, np.ndarray) or not isinstance(omega, np.ndarray):
+        raise Exception("The terrain angle must be in an array.")    
+    if not len(omega) == len(terrain_angle):
+        raise Exception("The length of omega and terrain angle should be the same size.")
+    if (not isinstance(Crr, int) and not isinstance(Crr, float)) or (Crr < 0):
+        raise Exception("The value of Crr must be a positive scalar value.")
+    
+    Frr = np.array()
+
+    #append values for rolling force to empty array Frr
+
+    for i in terrain_angle:
+        if not isinstance(terrain_angle[i], (float, int)):
+            raise Exception("The terrain angle must be a scalar or vector.")
+        if terrain_angle[i] < -75 or terrain_angle[i] > 75:
+            raise Exception("All terrain angles must be between -75 and 75 degrees.")
+        wheel_velocity = (omega[i] / get_gear_ratio(rover['wheel_assembly']['speed_reducer'])) * (rover['wheel_assembly']['wheel']['radius'])
+        force_rolling = (planet['g'])*(-1)*Crr*get_mass(rover)*np.cos(terrain_angle[i])*math.erf(40*wheel_velocity)
+        Frr.append(force_rolling)
+    return Frr
 
 
 def F_net(omega: np.ndarray, terrain_angle: np.ndarray, rover: dict, planet: dict, Crr: float) -> np.ndarray:
