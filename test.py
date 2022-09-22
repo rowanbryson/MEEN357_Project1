@@ -136,8 +136,8 @@ class TestFDrive(unittest.TestCase):
         test_cases = [
             {
                 'rover': self.default_rover,
-                'omega': np.array([1]),
-                'expected': np.array([1278.72807])
+                'omega': np.array([0.00, 0.50, 1.00, 2.00, 3.00, 3.80]),
+                'expected': np.array([10412.50, 9042.4342, 7672.3684, 4932.2368, 2192.1053, 0.00])  # Based on Class Slides
             }
         ]
         # run subtests for each input
@@ -146,6 +146,59 @@ class TestFDrive(unittest.TestCase):
             with self.subTest(rover=rover, omega=omega):
                 # calculate the actual output
                 actual = F_drive(omega, rover)
+                # check that the actual output matches the expected output to within 1e-6
+                self.assertTrue(np.allclose(actual, expected, atol=1e-6))
+
+
+class TestGetMass(unittest.TestCase):
+    def setUp(self):
+        self.default_rover = MARVIN_DICT['rover']
+
+    # test that the function returns the correct value
+    def test_get_mass_accuracy(self):
+        test_cases = [
+            {
+                'rover': self.default_rover,
+                'expected': 865.0
+            },
+            {
+                'rover': "string",
+                'expected': Exception
+            }
+        ]
+        # run subtests for each input
+        for test_case in test_cases:
+            rover, expected = test_case['rover'], test_case['expected']
+            with self.subTest(rover=rover):
+                # calculate the actual output
+                actual = get_mass(rover)
+                # check that the actual output matches the expected output to within 1e-6
+                self.assertTrue(np.allclose(actual, expected, atol=1e-6))
+
+
+class TestFNet(unittest.TestCase):
+    def setUp(self):
+        self.default_rover = MARVIN_DICT['rover']
+        self.default_planet = MARVIN_DICT['planet']
+
+    # test that the function returns the correct value
+    def test_F_net_accuracy(self):
+        test_cases = [
+            {
+                'rover': self.default_rover,
+                'planet': self.default_planet,
+                'omega': np.array([0.00, 0.50, 1.00, 2.00, 3.00, 3.80]),
+                'terrain_angle': np.array([-5.0, 0, 5.0, 10.0, 20.0, 30.0]),
+                'Crr': 0.1,
+                'expected': np.array([10694.2466, 8720.9744, 7068.5839, 4052.5310, 782.6910, -1896.2983])  # Based on Class Slides
+            }
+        ]
+        # run subtests for each input
+        for test_case in test_cases:
+            rover, planet, terrain_angle, omega, Crr, expected = test_case['rover'], test_case['planet'], test_case['omega'], test_case['terrain_angle'], test_case['Crr'],  test_case['expected']
+            with self.subTest(rover=rover, omega=omega, terrain_angle=terrain_angle, Crr=Crr, planet=planet):
+                # calculate the actual output
+                actual = F_net(omega, terrain_angle, rover, planet, Crr)
                 # check that the actual output matches the expected output to within 1e-6
                 self.assertTrue(np.allclose(actual, expected, atol=1e-6))
 

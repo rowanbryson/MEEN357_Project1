@@ -101,7 +101,7 @@ def get_gear_ratio(speed_reducer: dict) -> float:
         raise Exception('Input argument must be a dictionary.')
 
     # Comparison
-    if not speed_reducer['type'].lower() == 'reverted':
+    if speed_reducer['type'].lower() != 'reverted':
         raise Exception('get_gear_ratio does not currently support speed reducer types other than reverted')
 
     # Calculation / Output
@@ -148,6 +148,8 @@ def tau_dcmotor(omega: np.ndarray, motor: dict) -> np.ndarray:
         raise ValueError('Input argument motor must contain keys "torque_stall", "torque_noload", and "speed_noload".')
     if not all([isinstance(motor[key], (int, float)) for key in ['torque_stall', 'torque_noload', 'speed_noload']]):
         raise TypeError('"torque_stall", "torque_noload", and "speed_noload" must be numeric scalars.')
+
+    # check that omega input is not a multidimensional array/matrix (can only be a single dimension array)
 
     #### FUNCTION BODY ####
 
@@ -354,7 +356,7 @@ def F_net(omega: np.ndarray, terrain_angle: np.ndarray, rover: dict, planet: dic
     gravity = F_gravity(terrain_angle, rover, planet)
 
     # Force in the direction of motion
-    return drive - rolling + gravity*np.sin(terrain_angle)
+    return drive + rolling + gravity
 
 
 def wierd():
