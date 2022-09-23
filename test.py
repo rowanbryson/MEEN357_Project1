@@ -159,7 +159,7 @@ class TestGetMass(unittest.TestCase):
         test_cases = [
             {
                 'rover': self.default_rover,
-                'expected': 865.0
+                'expected': 869.0
             },
             {
                 'rover': "string",
