@@ -27,6 +27,13 @@ class TestTauDcMotor(unittest.TestCase):
     def setUp(self):
         self.default_motor = MARVIN_DICT['rover']['wheel_assembly']['motor']
 
+    def test_from_class_slides(self):
+        omega = np.array([0, 0.5, 1, 2, 3, 3.8])
+        motor = self.default_motor
+        expected = np.array([170, 147.6316, 125.2632, 80.5263, 35.7895, 0])
+        actual = tau_dcmotor(omega, motor)
+        self.assertTrue(np.allclose(actual, expected, atol=1e-4))
+
     # test that the function returns the correct value
     def test_tau_dcmotor_accuracy(self):
         test_cases = [
@@ -131,13 +138,14 @@ class TestFDrive(unittest.TestCase):
     def setUp(self):
         self.default_rover = MARVIN_DICT['rover']
 
+
     # test that the function returns the correct value
     def test_F_drive_accuracy(self):
         test_cases = [
             {
                 'rover': self.default_rover,
-                'omega': np.array([1]),
-                'expected': np.array([1278.72807])
+                'omega': np.array([0.00, 0.50, 1.00, 2.00, 3.00, 3.80]),
+                'expected': np.array([10412.50, 9042.4342, 7672.3684, 4932.2368, 2192.1053, 0.00])  # Based on Class Slides
             }
         ]
         # run subtests for each input
@@ -150,28 +158,160 @@ class TestFDrive(unittest.TestCase):
                 self.assertTrue(np.allclose(actual, expected, atol=1e-6))
 
 
-class TestFGravity(unittest.TestCase):
+class TestGetMass(unittest.TestCase):
     def setUp(self):
         self.default_rover = MARVIN_DICT['rover']
-        self.default_planet = MARVIN_DICT['rover']
 
-    def test_F_gravity_accuracy(self):
+    # test that the function returns the correct value
+    def test_get_mass_accuracy(self):
         test_cases = [
             {
-                'terrain_angle' : np.array([30, 60, 75]), 
-                'rover' : self.default_rover, 
-                'planet' : self.default_planet, 
-                'expected' : np.array([-2678.77246, -1546.59, -800.57389])
-            }
+                'rover': self.default_rover,
+                'expected': 869.0
+            },
+            # {
+            #     'rover': "string",
+            #     'expected': Exception
+            # }
         ]
-
+        # run subtests for each input
         for test_case in test_cases:
-            terrain_angle, rover, planet, expected, = test_case['terrain_angle'], test_case['rover'], test_case['planet'], test_case['expected']
-            with self.subTest(terrain_angle=terrain_angle, rover=rover, planet=planet):
-                actual = F_gravity(terrain_angle, rover, planet)
+            rover, expected = test_case['rover'], test_case['expected']
+            with self.subTest(rover=rover):
+                # calculate the actual output
+                actual = get_mass(rover)
+                # check that the actual output matches the expected output to within 1e-6
                 self.assertTrue(np.allclose(actual, expected, atol=1e-6))
 
-    
+
+class TestFNet(unittest.TestCase):
+    def setUp(self):
+        self.default_rover = MARVIN_DICT['rover']
+        self.default_planet = MARVIN_DICT['planet']
+
+    def test_0_case(self):
+        rover = self.default_rover
+        planet = self.default_planet
+        omega = np.array([0.00])
+        terrain_angle = np.array([0.00])
+        Crr = 0.01
+        expected = np.array([10412.50])
+
+        actual = F_net(omega, terrain_angle, rover, planet, Crr)
+
+        print(f'expected: {list(expected)}')
+        print(f'actual: {list(actual)}')
+
+        self.assertTrue(np.allclose(actual, expected, atol=1e-6))
+
+    # test that the function returns the correct value
+    def test_F_net_accuracy(self):
+        test_cases = [
+            {
+                'rover': self.default_rover,
+                'planet': self.default_planet,
+                'omega': np.array([0.00, 0.50, 1.00, 2.00, 3.00, 3.80]),
+                'terrain_angle': np.array([-5.0, 0, 5.0, 10.0, 20.0, 30.0]),
+                'Crr': 0.1,
+                'expected': np.array([10694.2466, 8720.9744, 7068.5839, 4052.5310, 782.6910, -1896.2983])  # Based on Class Slides
+            }
+        ]
+        # run subtests for each input
+        for test_case in test_cases:
+            rover, planet, terrain_angle, omega, Crr, expected = test_case['rover'], test_case['planet'], test_case['omega'], test_case['terrain_angle'], test_case['Crr'],  test_case['expected']
+            with self.subTest(rover=rover, omega=omega, terrain_angle=terrain_angle, Crr=Crr, planet=planet):
+                # calculate the actual output
+                actual = F_net(omega, terrain_angle, rover, planet, Crr)
+                # check that the actual output matches the expected output to within 1e-6
+
+                # print the actual and expected output
+                print(f'testing F_net')
+                print(f'actual: {actual}')
+                print(f'expected: {expected}')
+
+
+                self.assertTrue(np.allclose(actual, expected, atol=1e-6))
+
+
+class TestFGravity(unittest.TestCase):
+    def setUp(self) -> None:
+        self.default_rover = MARVIN_DICT['rover']
+        self.default_planet = MARVIN_DICT['planet']
+
+    def test_F_gravity_accuracy_1(self):
+        terrain_angle = np.array([-5.0, 0, 5.0, 10.0, 20.0, 30.0])
+        rover = self.default_rover
+        planet =self.default_planet
+        expected = np.array([281.746626465, 0, -281.746626465, -561.34899098, -1105.64167693, -1616.34])
+
+        # calculate the actual output
+        actual = F_gravity(terrain_angle, rover, planet)
+        # check that the actual output matches the expected output to within 1e-6
+        self.assertTrue(np.allclose(actual, expected, atol=1e-6))
+
+    def test_0_is_0(self):
+        terrain_angle = np.array([0.00])
+        rover = self.default_rover
+        planet = self.default_planet
+        expected = np.array([0.00])
+
+        # calculate the actual output
+        actual = F_gravity(terrain_angle, rover, planet)
+        # check that the actual output matches the expected output to within 1e-6
+        self.assertTrue(np.allclose(actual, expected, atol=1e-6))
+
+
+class TestFRolling(unittest.TestCase):
+    def setUp(self) -> None:
+        self.default_rover = MARVIN_DICT['rover']
+        self.default_planet = MARVIN_DICT['planet']
+
+    def test_0_is_0(self):
+        omega = np.array([0.00])
+        terrain_angle = np.array([0.00])
+        rover = self.default_rover
+        planet = self.default_planet
+        Crr = 0.01
+        expected = np.array([0.00])
+
+        actual = F_rolling(omega, terrain_angle, rover, planet, Crr)
+        self.assertTrue(np.allclose(actual, expected, atol=1e-6))
+
+    def test_F_rolling_accuracy_2(self):
+        test_cases = [
+            {
+                'omega': np.array([0, 0, 1, 1, 3.8, 3.8]),
+                'terrain_angle': np.array([0, 30, 0, 30, 0, 30]),
+                'rover': self.default_rover,
+                'planet': self.default_planet,
+                'Crr': 0.1,
+                'expected': np.array([0, 0, -323.2679903, -279.95829183, -323.268, -279.958300231])
+            },
+            {
+                'omega': np.array([0, 0, 1, -1, 3.8, -3.8]),
+                'terrain_angle': np.array([-10, -20, -30, -40, -50, -60]),
+                'rover': self.default_rover,
+                'planet': self.default_planet,
+                'Crr': 0.1,
+                'expected': np.array([0, 0, -279.95829183, 247.637647608, -207.792665008, 161.634])
+            }
+        ]
+        # run subtests for each input
+        for test_case in test_cases:
+            omega, terrain_angle, rover, planet, Crr = test_case['omega'], test_case['terrain_angle'], test_case['rover'], test_case['planet'], test_case['Crr']
+            expected = test_case['expected']
+            with self.subTest(omega=omega, terrain_angle=terrain_angle, rover=rover, planet=planet, Crr=Crr, expected=expected):
+                # calculate the actual output
+                actual = F_rolling(omega, terrain_angle, rover, planet, Crr)
+
+                # print the actual and expected output
+                # print(f'testing F_rolling')
+                # print(f'actual: {actual}')
+                # print(f'expected: {expected}')
+
+                # check that the actual output matches the expected output to within 1e-6
+                self.assertTrue(np.allclose(actual, expected, atol=1e-6))
+
 
 if __name__ == '__main__':
     unittest.main()

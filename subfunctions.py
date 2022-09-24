@@ -194,53 +194,66 @@ def F_drive(omega: np.ndarray, rover: dict) -> np.ndarray:
     wheel_radius = rover['wheel_assembly']['wheel']['radius']
 
     tau = tau_dcmotor(omega, rover['wheel_assembly']['motor'])
-    Fd = tau * gear_ratio / wheel_radius
+    # multiply by 6 because there are 6 wheels
+    Fd = 6 * tau * gear_ratio / wheel_radius
+
+    # Fd = np.zeros_like(omega, dtype=float)
+    # for i in range(len(omega)):
+    #     Fd[i] = 6 * tau[i] * gear_ratio / wheel_radius
+
     return Fd
 
 
 def F_gravity(terrain_angle: np.ndarray, rover: dict, planet: dict):
     '''
-    This function computes the force of gravity acting on the rover. This force is a function of terrain angle, the total 
-    mass of the rover and the gravity on the planet (all defined in the rover dict).
+    This function computes the component of force due to gravity, in Newtons, acting in the direction of rover
+    translation. This force is a function of the angle the terrain makes with the horizon (in degrees) and the total mass
+    of the rover (in kg).
+    This function should be “vectorized” such that if given a vector of terrain angles, it returns a vector of the same
+    size consisting of the corresponding forces.
 
     Parameters
     ----------
     terrain_angle: numpy array
-        Array of terrain angles []
+        Array of terrain angles [deg]
+            !! in degrees !!
 
     rover: dict
-        Data structure specifying rover parameters [deg]
+        Data structure containing rover parameters
 
     planet: dict
-        Data structure containing planet gravity parameter [m/s**2]
-    
+        Data structure containing gravity parameter
+
     Returns
     -------
-    Fgt: numpy array 
-        Array of values of the force of gravity [N]
+    Fgt: numpy array
+        Array of gravity forces [N]
     '''
+
     #check if rover and planet are dictionairies
     if not isinstance(rover, dict) or not isinstance(planet, dict):
         raise Exception("The rover and planet attributes must be dictionaries.")
 
     #check if terrain angle is a np array
     if not isinstance(terrain_angle, np.ndarray):
-        raise Exception("The terrain angle must be in an array.")
+        raise Exception("The terrain angle must be in anarray.")
 
     #adds the gravity force to empty array for each terrain angle 
-    Fgt = np.zeros_like(terrain_angle, dtype=float)
+    Fgt = np.zeros_like(terrain_angle)
     for i in range(len(terrain_angle)):
 
         #check for terrain angle type and range
-        if not isinstance(terrain_angle[i], float) and not isinstance(terrain_angle[i], int):
+        if not isinstance(terrain_angle[i], (float, int)):
             raise Exception("The terrain angle must be a scalar or vector.")
         if terrain_angle[i] < -75 or terrain_angle[i] > 75:
             raise Exception("All terrain angles must be between -75 and 75 degrees.")
 
+        terrain_angle_rad = np.deg2rad(terrain_angle[i])
         #F_gravity = (-3.72)*cos(terrainangle)*(total mass of rover)
-        gravity_force = (planet['g'])*np.cos(terrain_angle[i])*get_mass(rover)*(-1)
-        Fgt[i] = gravity_force
+        gravity_force = (planet['g'])*np.sin(terrain_angle_rad)*get_mass(rover)*(-1)
 
+
+        Fgt[i] = gravity_force
     return Fgt
 
 
@@ -282,26 +295,29 @@ def F_rolling(omega: np.ndarray, terrain_angle: np.ndarray, rover: dict, planet:
     if not isinstance(rover, dict) or not isinstance(planet, dict):
         raise Exception("The rover and planet attributes must be dictionaries.")
     if not isinstance(terrain_angle, np.ndarray) or not isinstance(omega, np.ndarray):
-        raise Exception("The terrain angle must be in an array.")    
-    if not omega.size == omega.size:
-        raise Exception("The length of omega and terrain angle should be the same size.")
+        raise Exception("The terrain angle must be in an numpy array.")
+    if not (omega.dtype == np.float64 or omega.dtype == np.int64):
+        raise Exception("The omega array must be of type float64.")
+    if not (terrain_angle.dtype == np.float64 or terrain_angle.dtype == np.int64):
+        raise Exception(f"The terrain angle array must be of type float64 or int64, not {terrain_angle.dtype}.")
+    if not omega.shape == terrain_angle.shape:
+        raise Exception("The omega and terrain angle arrays must be the same size.")
+    if np.any(terrain_angle < -75) or np.any(terrain_angle > 75):
+        raise Exception("All terrain angles must be between -75 and 75 degrees.")
     if (not isinstance(Crr, int) and not isinstance(Crr, float)) or (Crr < 0):
         raise Exception("The value of Crr must be a positive scalar value.")
     
     Frr = np.zeros_like(terrain_angle, dtype=float)
 
-    #append values for rolling force to empty array Frr
+    gear_ratio = get_gear_ratio(rover['wheel_assembly']['speed_reducer'])
+    wheel_radius = rover['wheel_assembly']['wheel']['radius']
 
-    for i in range(terrain_angle):
-        if not isinstance(terrain_angle[i], (float, int)):
-            raise Exception("The terrain angle must be a scalar or vector.")
-        if terrain_angle[i] < -75 or terrain_angle[i] > 75:
-            raise Exception("All terrain angles must be between -75 and 75 degrees.")
-        wheel_velocity = (omega[i] / get_gear_ratio(rover['wheel_assembly']['speed_reducer'])) * (rover['wheel_assembly']['wheel']['radius'])
-        force_rolling = ((planet['g'])*(-1)*Crr*get_mass(rover)*np.cos(terrain_angle[i])*math.erf(40*wheel_velocity))*6
-        
+    for i in range(len(terrain_angle)):
+        wheel_velocity = (omega[i] / gear_ratio) * (wheel_radius)
+        normal_force = get_mass(rover) * planet['g'] * np.cos(np.deg2rad(terrain_angle[i]))
+        force_rolling = -Crr * normal_force * math.erf(40 * wheel_velocity)
         Frr[i] = force_rolling
-        
+
     return Frr
 
 
@@ -374,6 +390,4 @@ def F_net(omega: np.ndarray, terrain_angle: np.ndarray, rover: dict, planet: dic
     gravity = F_gravity(terrain_angle, rover, planet)
 
     # Force in the direction of motion
-    return drive - rolling + gravity*np.sin(terrain_angle)
-
-
+    return drive + rolling + gravity
