@@ -194,35 +194,53 @@ def F_drive(omega: np.ndarray, rover: dict) -> np.ndarray:
     wheel_radius = rover['wheel_assembly']['wheel']['radius']
 
     tau = tau_dcmotor(omega, rover['wheel_assembly']['motor'])
-    # multiply by 6 because there are 6 wheels
-    Fd = 6 * tau * gear_ratio / wheel_radius
+    Fd = tau * gear_ratio / wheel_radius
     return Fd
 
 
 def F_gravity(terrain_angle: np.ndarray, rover: dict, planet: dict):
+    '''
+    This function computes the force of gravity acting on the rover. This force is a function of terrain angle, the total 
+    mass of the rover and the gravity on the planet (all defined in the rover dict).
 
+    Parameters
+    ----------
+    terrain_angle: numpy array
+        Array of terrain angles []
+
+    rover: dict
+        Data structure specifying rover parameters [deg]
+
+    planet: dict
+        Data structure containing planet gravity parameter [m/s**2]
+    
+    Returns
+    -------
+    Fgt: numpy array 
+        Array of values of the force of gravity [N]
+    '''
     #check if rover and planet are dictionairies
     if not isinstance(rover, dict) or not isinstance(planet, dict):
         raise Exception("The rover and planet attributes must be dictionaries.")
 
     #check if terrain angle is a np array
     if not isinstance(terrain_angle, np.ndarray):
-        raise Exception("The terrain angle must be in anarray.")
+        raise Exception("The terrain angle must be in an array.")
 
     #adds the gravity force to empty array for each terrain angle 
-    Fgt = np.array()
+    Fgt = np.zeros_like(terrain_angle, dtype=float)
     for i in range(len(terrain_angle)):
 
         #check for terrain angle type and range
-        if not isinstance(terrain_angle[i], (float, int)):
+        if not isinstance(terrain_angle[i], float) and not isinstance(terrain_angle[i], int):
             raise Exception("The terrain angle must be a scalar or vector.")
         if terrain_angle[i] < -75 or terrain_angle[i] > 75:
             raise Exception("All terrain angles must be between -75 and 75 degrees.")
 
         #F_gravity = (-3.72)*cos(terrainangle)*(total mass of rover)
         gravity_force = (planet['g'])*np.cos(terrain_angle[i])*get_mass(rover)*(-1)
+        Fgt[i] = gravity_force
 
-        Fgt.append(gravity_force)
     return Fgt
 
 
@@ -265,23 +283,25 @@ def F_rolling(omega: np.ndarray, terrain_angle: np.ndarray, rover: dict, planet:
         raise Exception("The rover and planet attributes must be dictionaries.")
     if not isinstance(terrain_angle, np.ndarray) or not isinstance(omega, np.ndarray):
         raise Exception("The terrain angle must be in an array.")    
-    if not len(omega) == len(terrain_angle):
+    if not omega.size == omega.size:
         raise Exception("The length of omega and terrain angle should be the same size.")
     if (not isinstance(Crr, int) and not isinstance(Crr, float)) or (Crr < 0):
         raise Exception("The value of Crr must be a positive scalar value.")
     
-    Frr = np.array()
+    Frr = np.zeros_like(terrain_angle, dtype=float)
 
     #append values for rolling force to empty array Frr
 
-    for i in terrain_angle:
+    for i in range(terrain_angle):
         if not isinstance(terrain_angle[i], (float, int)):
             raise Exception("The terrain angle must be a scalar or vector.")
         if terrain_angle[i] < -75 or terrain_angle[i] > 75:
             raise Exception("All terrain angles must be between -75 and 75 degrees.")
         wheel_velocity = (omega[i] / get_gear_ratio(rover['wheel_assembly']['speed_reducer'])) * (rover['wheel_assembly']['wheel']['radius'])
-        force_rolling = (planet['g'])*(-1)*Crr*get_mass(rover)*np.cos(terrain_angle[i])*math.erf(40*wheel_velocity)
-        Frr.append(force_rolling)
+        force_rolling = ((planet['g'])*(-1)*Crr*get_mass(rover)*np.cos(terrain_angle[i])*math.erf(40*wheel_velocity))*6
+        
+        Frr[i] = force_rolling
+        
     return Frr
 
 
@@ -357,7 +377,3 @@ def F_net(omega: np.ndarray, terrain_angle: np.ndarray, rover: dict, planet: dic
     return drive - rolling + gravity*np.sin(terrain_angle)
 
 
-def wierd():
-    return 10
-
-## kayla

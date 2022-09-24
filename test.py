@@ -150,5 +150,28 @@ class TestFDrive(unittest.TestCase):
                 self.assertTrue(np.allclose(actual, expected, atol=1e-6))
 
 
+class TestFGravity(unittest.TestCase):
+    def setUp(self):
+        self.default_rover = MARVIN_DICT['rover']
+        self.default_planet = MARVIN_DICT['rover']
+
+    def test_F_gravity_accuracy(self):
+        test_cases = [
+            {
+                'terrain_angle' : np.array([30, 60, 75]), 
+                'rover' : self.default_rover, 
+                'planet' : self.default_planet, 
+                'expected' : np.array([-2678.77246, -1546.59, -800.57389])
+            }
+        ]
+
+        for test_case in test_cases:
+            terrain_angle, rover, planet, expected, = test_case['terrain_angle'], test_case['rover'], test_case['planet'], test_case['expected']
+            with self.subTest(terrain_angle=terrain_angle, rover=rover, planet=planet):
+                actual = F_gravity(terrain_angle, rover, planet)
+                self.assertTrue(np.allclose(actual, expected, atol=1e-6))
+
+    
+
 if __name__ == '__main__':
     unittest.main()
