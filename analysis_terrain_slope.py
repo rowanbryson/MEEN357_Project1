@@ -14,15 +14,15 @@ def main():
     planet = MARVIN_DICT['planet']
 
     for ii in range(len(slope_list_deg)):
-        fun = lambda omega: F_net(omega, float(slope_list_deg[ii]), rover, planet, Crr)
+        fun = lambda omega: F_net(np.array([omega]), np.array([float(slope_list_deg[ii])]), rover, planet, Crr)
         sol = root_scalar(fun, method='bisect', bracket=[0, omega_nl])
-        omega_max = root(sol)
+        omega_max = sol.root
         v_max[ii] = wheel_radius * 6 * omega_max
 
     plt.plot(slope_list_deg, v_max)
-    plt.title("")
-    plt.xlabel("")
-    plt.ylabel("")
+    plt.title("Slope [deg] vs Maximum Velocity [m/s]")
+    plt.xlabel("Slope [deg]")
+    plt.ylabel("Maximum Velocity [m/s]")
     plt.show()
 
 if __name__ == '__main__':
