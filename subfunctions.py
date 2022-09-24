@@ -296,9 +296,9 @@ def F_rolling(omega: np.ndarray, terrain_angle: np.ndarray, rover: dict, planet:
         raise Exception("The rover and planet attributes must be dictionaries.")
     if not isinstance(terrain_angle, np.ndarray) or not isinstance(omega, np.ndarray):
         raise Exception("The terrain angle must be in an numpy array.")
-    if not (omega.dtype == np.float64 or omega.dtype == np.int64):
+    if not np.issubdtype(omega.dtype, np.number):
         raise Exception("The omega array must be of type float64.")
-    if not (terrain_angle.dtype == np.float64 or terrain_angle.dtype == np.int64):
+    if not np.issubdtype(terrain_angle.dtype, np.number):
         raise Exception(f"The terrain angle array must be of type float64 or int64, not {terrain_angle.dtype}.")
     if not omega.shape == terrain_angle.shape:
         raise Exception("The omega and terrain angle arrays must be the same size.")
