@@ -386,10 +386,10 @@ def F_net(omega: np.ndarray, terrain_angle: np.ndarray, rover: dict, planet: dic
     if not Crr > 0:
         raise Exception("Fifth argument should be positive")
 
+
     # Force Calculations
     drive = F_drive(omega, rover)
     rolling = F_rolling(omega, terrain_angle, rover, planet, Crr)
     gravity = F_gravity(terrain_angle, rover, planet)
 
-    # Force in the direction of motion
     return drive + rolling + gravity
