@@ -230,28 +230,29 @@ def F_gravity(terrain_angle: np.ndarray, rover: dict, planet: dict):
         Array of gravity forces [N]
     '''
 
-    #check if rover and planet are dictionairies
-    if not isinstance(rover, dict) or not isinstance(planet, dict):
-        raise Exception("The rover and planet attributes must be dictionaries.")
+    if not isinstance(rover, dict):
+        raise Exception("rover must be a dictionary")
+    if not isinstance(planet, dict):
+        raise Exception("planet must be a dictionary")
 
-    #check if terrain angle is a np array
+    if isinstance(terrain_angle, (int, float)):
+        terrain_angle = np.array([terrain_angle], dtype=np.float64)
+    elif isinstance(terrain_angle, list):
+        terrain_angle = np.array(terrain_angle, dtype=np.float64)
     if not isinstance(terrain_angle, np.ndarray):
-        raise Exception("The terrain angle must be in anarray.")
+        raise Exception("terrain_angle must be an arraylike or a scalar")
+    
+    # check that all values in terrain_angle are between -75 and 75
+    if not np.all(np.logical_and(terrain_angle >= -75, terrain_angle <= 75)):
+        raise Exception("all values in terrain_angle must be between -75 and 75")
 
     #adds the gravity force to empty array for each terrain angle 
     Fgt = np.zeros_like(terrain_angle)
     for i in range(len(terrain_angle)):
 
-        #check for terrain angle type and range
-        if not isinstance(terrain_angle[i], (float, int)):
-            raise Exception("The terrain angle must be a scalar or vector.")
-        if terrain_angle[i] < -75 or terrain_angle[i] > 75:
-            raise Exception("All terrain angles must be between -75 and 75 degrees.")
-
         terrain_angle_rad = np.deg2rad(terrain_angle[i])
         #F_gravity = (-3.72)*cos(terrainangle)*(total mass of rover)
         gravity_force = (planet['g'])*np.sin(terrain_angle_rad)*get_mass(rover)*(-1)
-
 
         Fgt[i] = gravity_force
     return Fgt
@@ -355,14 +356,23 @@ def F_net(omega: np.ndarray, terrain_angle: np.ndarray, rover: dict, planet: dic
     # Input Validation
 
     # (a) first and second arguments are a scalar or vector
-    if not isinstance(omega, np.ndarray) or isinstance(omega, (int, float)):
-        raise Exception('First argument should be array or scalar.')
-    if not isinstance(terrain_angle, np.ndarray) or isinstance(terrain_angle, (int, float)):
-        raise Exception('Second argument should be array or scalar.')
+    if isinstance(omega, (int, float)):
+        omega = np.array([omega])
+    elif isinstance(omega, list):
+        omega = np.array(omega)
+    if not isinstance(omega, np.ndarray):
+        raise Exception('omega should be array or scalar.')
+
+    if isinstance(terrain_angle, (int, float)):
+        terrain_angle = np.array([terrain_angle])
+    elif isinstance(terrain_angle, list):
+        terrain_angle = np.array(terrain_angle)
+    if not isinstance(terrain_angle, np.ndarray):
+        raise Exception('terrain_angle should be array or scalar.')
 
     # (a) first and second arguments are equal size
     if not (omega.size == terrain_angle.size):
-        raise Exception('First and Second argument not same size')
+        raise Exception('omega and terrain_angle are not same size')
 
     # (b) elements of second are between -75 and 75
     outside_range = False
@@ -370,19 +380,19 @@ def F_net(omega: np.ndarray, terrain_angle: np.ndarray, rover: dict, planet: dic
         if i < -75 or i > 75:
             outside_range = True
     if outside_range is True:
-        raise Exception("Second argument contains a value less than -75deg or greater than 75deg")
+        raise Exception("terrain_angle must be between -75 and 75 degrees")
 
     # (c) third and fourth are dict
     if not isinstance(rover, dict):
-        raise Exception("Third argument is not a dictionary")
+        raise Exception("rover should be a dict")
     if not isinstance(planet, dict):
-        raise Exception("Fourth argument is not a dictionary")
+        raise Exception("planet should be a dict")
 
     # (d) fifth is positive scalar
     if not isinstance(Crr, (int, float)):
-        raise Exception("Fifth argument should be a scalar")
+        raise Exception("Crr should be a scalar")
     if not Crr > 0:
-        raise Exception("Fifth argument should be positive")
+        raise Exception("Crr should be positive")
 
 
     # Force Calculations
