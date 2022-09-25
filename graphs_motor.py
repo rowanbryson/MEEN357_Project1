@@ -2,7 +2,7 @@ from subfunctions import *
 import matplotlib.pyplot as plt
 import numpy as np
 
-def main():
+def main(save_plots=False):
     motor_shaft_speed = np.linspace(0.0, 4.0, num=100)
     motor_shaft_torque = tau_dcmotor(motor_shaft_speed, MARVIN_DICT['rover']['wheel_assembly']['motor'])
     motor_power = motor_shaft_speed*motor_shaft_torque
@@ -25,6 +25,8 @@ def main():
     ax3.set_ylabel("Motor power [W]")
 
     plt.tight_layout()
+    if save_plots:
+        plt.savefig('plots/graphs_motor.png')
     plt.show()
 
 if __name__ == '__main__':

@@ -3,11 +3,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-def main():
+def main(save_plots=False):
     
     # Get Gear Ratio
     gear_ratio = get_gear_ratio(MARVIN_DICT['rover']['wheel_assembly']['speed_reducer'])
-    print(gear_ratio)
 
     # Get Motor Torque
     motor_shaft_speed = np.linspace(0.0, 4.0, num=100)
@@ -37,6 +36,8 @@ def main():
     ax3.set_xlabel('SR Shaft Speed (rad/s)')
 
     plt.tight_layout()
+    if save_plots:
+        plt.savefig('plots/graphs_sr.png')
     plt.show()
 
 

@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-def main():
+def main(save_plots=False):
     
     #Initialize Variables
     terrain_angle = 0
@@ -23,6 +23,8 @@ def main():
     plt.title('Acceleration vs. Rolling Resistance Coefficient')
     plt.ylabel('Acceleration (m/s^2)')
     plt.xlabel('Crr')
+    if save_plots:
+        plt.savefig('plots/analysis_rolling_resistance.png')
     plt.show()
 
 

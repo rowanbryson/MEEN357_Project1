@@ -7,7 +7,7 @@ import numpy as np
 import warnings
 warnings.filterwarnings("ignore")
 
-def main():
+def main(save_plots=False):
     # initialize domain of interest
     Crr_array = np.linspace(0.01, 0.4, 25)
     slope_array_deg = np.linspace(-10, 35, 25)
@@ -49,6 +49,10 @@ def main():
     ax.set_xlabel("Crr")
     ax.set_ylabel("Terrain Slope [deg]")
     ax.set_zlabel("Maximum Velocity [m/s]")
+
+    if save_plots:
+        plt.savefig('plots/analysis_combined_terrain.png')
+
     plt.show()
 
 

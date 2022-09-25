@@ -4,7 +4,7 @@ from scipy.optimize import root_scalar
 from scipy.optimize import root
 import numpy as np
 
-def main():
+def main(save_plots=False):
     Crr = .2
     slope_list_deg = np.linspace(-10, 35, 25)
     v_max = np.zeros(len(slope_list_deg), dtype=float)
@@ -23,6 +23,8 @@ def main():
     plt.title("Slope [deg] vs Maximum Velocity [m/s]")
     plt.xlabel("Slope [deg]")
     plt.ylabel("Maximum Velocity [m/s]")
+    if save_plots:
+        plt.savefig('plots/analysis_terrain_slope.png')
     plt.show()
 
 if __name__ == '__main__':
