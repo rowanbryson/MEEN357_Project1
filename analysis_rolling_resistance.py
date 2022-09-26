@@ -4,7 +4,7 @@ import numpy as np
 from scipy.optimize import root_scalar
 from scipy.optimize import root
 
-def main():
+def main(save_plots=True):
     
     #Initialize Variables
     terrain_angle = 0
@@ -26,6 +26,8 @@ def main():
     plt.title('Max Velocity vs. Rolling Resistance Coefficient')
     plt.ylabel('V Max (m/s)')
     plt.xlabel('Crr')
+    if save_plots:
+        plt.savefig('plots/analysis_terrain_slope.png')
     plt.show()
 
 
