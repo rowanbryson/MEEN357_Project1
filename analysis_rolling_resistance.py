@@ -4,7 +4,7 @@ import numpy as np
 from scipy.optimize import root_scalar
 from scipy.optimize import root
 
-def main(save_plots=True):
+def main(save_plots=False):
     
     #Initialize Variables
     terrain_angle = 0
