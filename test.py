@@ -1,4 +1,3 @@
-from graphing_scripts.analysis_combined_terrain import MARVIN_DICT
 from subfunctions import *
 import define_rovers
 import unittest
@@ -24,13 +23,10 @@ import copy
 
 #         assert function_output == expected_output
 
-MARVIN_DICT = define_rovers.default_data_dict
-
-
 class TestTauDcMotor(unittest.TestCase):
     # add default_motor as a class attribute
     def setUp(self):
-        self.default_motor = MARVIN_DICT['rover']['wheel_assembly']['motor']
+        self.default_motor = define_rovers.rover1()['wheel_assembly']['motor']
 
     def test_from_class_slides(self):
         omega = np.array([0, 0.5, 1, 2, 3, 3.8])
@@ -110,7 +106,7 @@ class TestTauDcMotor(unittest.TestCase):
 class TestGetGearRatio(unittest.TestCase):
     # add default_speed_reducer as a class attribute
     def setUp(self):
-        self.default_speed_reducer = MARVIN_DICT['rover']['wheel_assembly']['speed_reducer']
+        self.default_speed_reducer = define_rovers.rover1()['wheel_assembly']['speed_reducer']
 
     # test that the function returns the correct value
     def test_get_gear_ratio_accuracy(self):
@@ -141,7 +137,7 @@ class TestGetGearRatio(unittest.TestCase):
 
 class TestFDrive(unittest.TestCase):
     def setUp(self):
-        self.default_rover = MARVIN_DICT['rover']
+        self.default_rover = define_rovers.rover1()
 
     # test that the function returns the correct value
 
@@ -166,7 +162,7 @@ class TestFDrive(unittest.TestCase):
 
 class TestGetMass(unittest.TestCase):
     def setUp(self):
-        self.default_rover = MARVIN_DICT['rover']
+        self.default_rover = define_rovers.rover1()
 
     # test that the function returns the correct value
     def test_get_mass_accuracy(self):
@@ -192,8 +188,8 @@ class TestGetMass(unittest.TestCase):
 
 class TestFNet(unittest.TestCase):
     def setUp(self):
-        self.default_rover = MARVIN_DICT['rover']
-        self.default_planet = MARVIN_DICT['planet']
+        self.default_rover = define_rovers.rover1()
+        self.default_planet = define_rovers.planet1()
 
     def test_0_case(self):
         rover = self.default_rover
@@ -231,8 +227,8 @@ class TestFNet(unittest.TestCase):
 
 class TestFGravity(unittest.TestCase):
     def setUp(self) -> None:
-        self.default_rover = MARVIN_DICT['rover']
-        self.default_planet = MARVIN_DICT['planet']
+        self.default_rover = define_rovers.rover1()
+        self.default_planet = define_rovers.planet1()
 
     def test_F_gravity_accuracy_1(self):
         terrain_angle = np.array([-5.0, 0, 5.0, 10.0, 20.0, 30.0])
@@ -260,8 +256,8 @@ class TestFGravity(unittest.TestCase):
 
 class TestFRolling(unittest.TestCase):
     def setUp(self) -> None:
-        self.default_rover = MARVIN_DICT['rover']
-        self.default_planet = MARVIN_DICT['planet']
+        self.default_rover = define_rovers.rover1()
+        self.default_planet = define_rovers.planet1()
 
     def test_0_is_0(self):
         omega = np.array([0.00])
@@ -313,8 +309,7 @@ class TestFRolling(unittest.TestCase):
 
 class TestMotorW(unittest.TestCase):
     def setUp(self) -> None:
-        self.default_rover = MARVIN_DICT['rover']
-        self.default_planet = MARVIN_DICT['planet']
+        self.default_rover = define_rovers.rover1()
 
     def test_nparray(self):
         v = np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10])

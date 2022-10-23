@@ -1,5 +1,8 @@
+# allow imports from parent directory
 import sys
-sys.path.append('../')
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from subfunctions import *
 import define_rovers
 import matplotlib.pyplot as plt
@@ -9,7 +12,7 @@ import numpy as np
 
 # this is a band aid to make the code work, the new subfunctions.py file doesn't define MARVIN_DICT
 # we might eventually want to change this to a function that takes in a rover name
-MARVIN_DICT = define_rovers.default_data_dict
+MARVIN_DICT = {'rover': define_rovers.rover1(), 'planet': define_rovers.planet1()}
 
 def main(save_plots=True):
     Crr = .2

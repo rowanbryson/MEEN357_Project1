@@ -1,6 +1,7 @@
-# this is replacing the old "MARVIN_DICT"
-default_data_dict = {
-    'rover': {
+import numpy as np
+
+def rover1():
+    rover_1 = {
         'wheel_assembly': {
             'wheel': {
                 'radius': 0.30,  # Radius of drive wheel [m]
@@ -18,6 +19,10 @@ default_data_dict = {
                 'torque_noload': 0,  # Motor no-load torque [Nm]
                 'speed_noload': 3.80,  # Motor no-load speed [rad/s]
                 'mass': 5.0,  # Motor mass [kg]
+                # N-element array of torque data points at which efficiency data is gathered [N-m]
+                'effcy_tau': np.array([0, 10, 20, 40, 75, 165]),
+                # N-element array of efficiency measurements corresponding to torque data [-]
+                'effcy': np.array([0, 0.60, 0.75, 0.73, 0.55, 0.5])
             }
         },
         'chassis': {
@@ -29,8 +34,12 @@ default_data_dict = {
         'power_subsys': {
             'mass': 90  # Mass of power subsystem [kg]
         },
-    },
-    'planet': {
+    }
+    return rover_1
+
+
+def planet1():
+    planet_1 = {
         'g': 3.72  # Acceleration due to gravity [m/s^2]
     }
-}
+    return planet_1

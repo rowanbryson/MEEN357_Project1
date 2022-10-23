@@ -2,9 +2,10 @@ from subfunctions import *
 import define_rovers
 import numpy as np
 
+# this file is for testing functions quickly without writing test cases
 
 def test_1():
-    MARVIN_DICT = define_rovers.default_data_dict
+    MARVIN_DICT = {'rover': define_rovers.rover1(), 'planet': define_rovers.planet1()}
     omega = np.array([0.0, 0.5, 1.0, 2.0, 3.0, 3.8])
     terrain = np.array([-5.0, 0.0, 5.0, 10.0, 20.0, 30.0])
     rover = MARVIN_DICT['rover']
@@ -19,7 +20,7 @@ def test_1():
     # https://imgur.com/a/pfgCgkn
 
 def test_motorW():
-    rover = define_rovers.default_data_dict['rover']
+    rover = define_rovers.rover1()
 
     gear_ratio = get_gear_ratio(rover['wheel_assembly']['speed_reducer'])
     wheel_radius = rover['wheel_assembly']['wheel']['radius']

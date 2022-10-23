@@ -1,5 +1,8 @@
+# allow imports from parent directory
 import sys
-sys.path.append('../')
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from subfunctions import *
 import define_rovers
 import matplotlib.pyplot as plt
@@ -12,7 +15,7 @@ warnings.filterwarnings("ignore")
 
 # this is a band aid to make the code work, the new subfunctions.py file doesn't define MARVIN_DICT
 # we might eventually want to change this to a function that takes in a rover name
-MARVIN_DICT = define_rovers.default_data_dict
+MARVIN_DICT = {'rover': define_rovers.rover1(), 'planet': define_rovers.planet1()}
 
 def main(save_plots=False):
     # initialize domain of interest
@@ -39,7 +42,7 @@ def main(save_plots=False):
             # this defines a function of Net force in terms of omega
             # the root of this function is omega_max
             # which is the maximum motor shaft speed
-            F_net_from_omega = lambda omega: F_net(omega, float(slope_array_deg[j]), rover, planet, Crr_array[i])
+            F_net_from_omega = lambda omega: F_net(omega, float(slope_array_deg[j]), rover, planet, float(Crr_array[i]))
 
             # I chose secant because it doesn't require a bracket
             # using 0 to noload_speed doesn't work because the function doesn't seem to be monotonic
