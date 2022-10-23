@@ -1,5 +1,5 @@
 # this is replacing the old "MARVIN_DICT"
-rover_1_dict = {
+default_data_dict = {
     'rover': {
         'wheel_assembly': {
             'wheel': {

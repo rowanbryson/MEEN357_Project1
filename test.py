@@ -23,7 +23,7 @@ import unittest
 
 #         assert function_output == expected_output
     
-MARVIN_DICT = define_rovers.rover_1_dict
+MARVIN_DICT = define_rovers.default_data_dict
 
 class TestTauDcMotor(unittest.TestCase):
     # add default_motor as a class attribute
@@ -202,8 +202,8 @@ class TestFNet(unittest.TestCase):
 
         actual = F_net(omega, terrain_angle, rover, planet, Crr)
 
-        print(f'expected: {list(expected)}')
-        print(f'actual: {list(actual)}')
+        # print(f'expected: {list(expected)}')
+        # print(f'actual: {list(actual)}')
 
         self.assertTrue(np.allclose(actual, expected, atol=1e-6))
 
@@ -297,9 +297,9 @@ class TestFRolling(unittest.TestCase):
                 actual = F_rolling(omega, terrain_angle, rover, planet, Crr)
 
                 # print the actual and expected output
-                print(f'testing F_rolling')
-                print(f'actual: {list(actual)}')
-                print(f'expected: {list(expected)}')
+                # print(f'testing F_rolling')
+                # print(f'actual: {list(actual)}')
+                # print(f'expected: {list(expected)}')
 
                 # check that the actual output matches the expected output to within 1e-6
                 self.assertTrue(np.allclose(actual, expected, atol=1e-6))
