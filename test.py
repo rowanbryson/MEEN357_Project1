@@ -1,4 +1,6 @@
+from graphing_scripts.analysis_combined_terrain import MARVIN_DICT
 from subfunctions import *
+import define_rovers
 import unittest
 
 # class TestWierd(unittest.TestCase):
@@ -21,6 +23,7 @@ import unittest
 
 #         assert function_output == expected_output
     
+MARVIN_DICT = define_rovers.rover_1_dict
 
 class TestTauDcMotor(unittest.TestCase):
     # add default_motor as a class attribute
@@ -58,7 +61,7 @@ class TestTauDcMotor(unittest.TestCase):
                 'expected': np.array([0])
             },
             {
-                'omega': [2.5, 2],
+                'omega': np.array([2.5, 2]),
                 'motor': self.default_motor,
                 'expected': np.array([58.1578947368, 80.5263157895])
             }
@@ -70,7 +73,7 @@ class TestTauDcMotor(unittest.TestCase):
                 # calculate the actual output
                 actual = tau_dcmotor(omega, motor)
                 # check that the actual output matches the expected output to within 1e-6
-                self.assertTrue(np.allclose(actual, expected, atol=1e-6))
+                self.assertTrue(np.allclose(actual, expected, atol=1e-5))
 
 
     # test that the function raises an error as designed when the input is invalid
@@ -80,17 +83,17 @@ class TestTauDcMotor(unittest.TestCase):
             {
                 'omega': 'string',
                 'motor': self.default_motor,
-                'expected': TypeError
+                'expected': Exception
             },
             {
                 'omega': np.array([-1, -0.5, 0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 5.5, 6]),
                 'motor': 'string',
-                'expected': TypeError
+                'expected': Exception
             },
             {
                 'omega': np.array([-1, -0.5, 0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 5.5, 6]),
                 'motor': {'incorrect': 'value'},
-                'expected': ValueError
+                'expected': Exception
             }
 
         ]
