@@ -333,19 +333,19 @@ def motorW(v, rover):
 
     # check that the velocity argument is a scalar or numpy array
     if (type(v) != int) and (type(v) != float) and (not isinstance(v, np.ndarray)):
-        raise ValueError('1st argument \'v\' must be a scalar or a numpy array')
+        raise TypeError('1st argument \'v\' must be a scalar or a numpy array')
     # make v a numpy array if it's a scalar
     if not isinstance(v, np.ndarray):
         v = np.array([v])
     # check that the vector is 1D
     if len(np.shape(v)) != 1:
-        raise ValueError('1st argument \'v\' must be a scalar or a vector. Matricies are not allowed.')
+        raise TypeError('1st argument \'v\' must be a scalar or a vector. Matricies are not allowed.')
 
     try:
-        gear_ratio = get_gear_ratio(rover['speed_reducer'])  # ratio of gearbox input shaft speed to output shaft speed
+        gear_ratio = get_gear_ratio(rover['wheel_assembly']['speed_reducer'])  # ratio of gearbox input shaft speed to output shaft speed
         wheel_w = v / rover['wheel_assembly']['wheel']['radius']  # rotational velocity of the wheel [rad/s]
     except KeyError as e:
-        raise ValueError(f'Invalid rover dictionary: {e}')
+        raise KeyError(f'Invalid rover dictionary, could not find key: {e}')
 
     motor_w = wheel_w * gear_ratio
 

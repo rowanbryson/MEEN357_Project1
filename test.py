@@ -2,6 +2,7 @@ from graphing_scripts.analysis_combined_terrain import MARVIN_DICT
 from subfunctions import *
 import define_rovers
 import unittest
+import copy
 
 # class TestWierd(unittest.TestCase):
 #     # this is an example of how to do a unit test
@@ -22,8 +23,9 @@ import unittest
 #         expected_output = 9
 
 #         assert function_output == expected_output
-    
+
 MARVIN_DICT = define_rovers.default_data_dict
+
 
 class TestTauDcMotor(unittest.TestCase):
     # add default_motor as a class attribute
@@ -75,8 +77,8 @@ class TestTauDcMotor(unittest.TestCase):
                 # check that the actual output matches the expected output to within 1e-6
                 self.assertTrue(np.allclose(actual, expected, atol=1e-5))
 
-
     # test that the function raises an error as designed when the input is invalid
+
     def test_tau_dcmotor_input_checking(self):
         # test that the function raises a ValueError when the inputs are the wrong type
         test_cases = [
@@ -141,14 +143,15 @@ class TestFDrive(unittest.TestCase):
     def setUp(self):
         self.default_rover = MARVIN_DICT['rover']
 
-
     # test that the function returns the correct value
+
     def test_F_drive_accuracy(self):
         test_cases = [
             {
                 'rover': self.default_rover,
                 'omega': np.array([0.00, 0.50, 1.00, 2.00, 3.00, 3.80]),
-                'expected': np.array([10412.50, 9042.4342, 7672.3684, 4932.2368, 2192.1053, 0.00])  # Based on Class Slides
+                # Based on Class Slides
+                'expected': np.array([10412.50, 9042.4342, 7672.3684, 4932.2368, 2192.1053, 0.00])
             }
         ]
         # run subtests for each input
@@ -215,7 +218,8 @@ class TestFNet(unittest.TestCase):
         terrain_angle = np.array([-5.0, 0, 5.0, 10.0, 20.0, 30.0])
         Crr = 0.1
 
-        expected = np.array([10694.2466, 8720.9744, 7068.5839, 4052.5310, 782.6910, -1896.2983])  # Based on Class Slides
+        expected = np.array([10694.2466, 8720.9744, 7068.5839,
+                            4052.5310, 782.6910, -1896.2983])  # Based on Class Slides
         actual = F_net(omega, terrain_angle, rover, planet, Crr)
         # check that the actual output matches the expected output to within 1e-6
         # print the actual and expected output
@@ -233,8 +237,9 @@ class TestFGravity(unittest.TestCase):
     def test_F_gravity_accuracy_1(self):
         terrain_angle = np.array([-5.0, 0, 5.0, 10.0, 20.0, 30.0])
         rover = self.default_rover
-        planet =self.default_planet
-        expected = np.array([281.746626465, 0, -281.746626465, -561.34899098, -1105.64167693, -1616.34])
+        planet = self.default_planet
+        expected = np.array(
+            [281.746626465, 0, -281.746626465, -561.34899098, -1105.64167693, -1616.34])
 
         # calculate the actual output
         actual = F_gravity(terrain_angle, rover, planet)
@@ -290,7 +295,8 @@ class TestFRolling(unittest.TestCase):
         ]
         # run subtests for each input
         for test_case in test_cases:
-            omega, terrain_angle, rover, planet, Crr = test_case['omega'], test_case['terrain_angle'], test_case['rover'], test_case['planet'], test_case['Crr']
+            omega, terrain_angle, rover, planet, Crr = test_case['omega'], test_case[
+                'terrain_angle'], test_case['rover'], test_case['planet'], test_case['Crr']
             expected = test_case['expected']
             with self.subTest(omega=omega, terrain_angle=terrain_angle, rover=rover, planet=planet, Crr=Crr, expected=expected):
                 # calculate the actual output
@@ -303,6 +309,48 @@ class TestFRolling(unittest.TestCase):
 
                 # check that the actual output matches the expected output to within 1e-6
                 self.assertTrue(np.allclose(actual, expected, atol=1e-6))
+
+
+class TestMotorW(unittest.TestCase):
+    def setUp(self) -> None:
+        self.default_rover = MARVIN_DICT['rover']
+        self.default_planet = MARVIN_DICT['planet']
+
+    def test_nparray(self):
+        v = np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+        expected = np.array([0, 10.20833333, 20.41666667, 30.625, 40.83333333,
+                            51.04166667, 61.25, 71.45833333, 81.66666667, 91.875, 102.08333333])
+        actual = motorW(v, self.default_rover)
+        self.assertTrue(np.allclose(actual, expected, atol=1e-6))
+
+    def test_int(self):
+        v = 1
+        expected = 10.20833333
+        actual = motorW(v, self.default_rover)
+        self.assertTrue(np.allclose(actual, expected, atol=1e-6))
+
+    def test_float(self):
+        v = 1.0
+        expected = 10.20833333
+        actual = motorW(v, self.default_rover)
+        self.assertTrue(np.allclose(actual, expected, atol=1e-6))
+
+    def test_string_exception(self):
+        v = '1'
+        with self.assertRaises(TypeError):
+            motorW(v, self.default_rover)
+
+    def test_list_exception(self):
+        v = [1]
+        with self.assertRaises(TypeError):
+            motorW(v, self.default_rover)
+
+    def test_invalid_rover_exception(self):
+        v = 1
+        rover = copy.deepcopy(self.default_rover)
+        del rover['wheel_assembly']['speed_reducer']
+        with self.assertRaises(KeyError):
+            motorW(v, rover)
 
 
 if __name__ == '__main__':
