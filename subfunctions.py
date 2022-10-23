@@ -33,6 +33,10 @@ def get_mass(rover):
 
 def get_gear_ratio(speed_reducer):
     """
+    !!! examples:
+        output_speed = input_speed / get_gear_ratio(speed_reducer)
+        output_torque = input_torque * get_gear_ratio(speed_reducer)
+
     Inputs:  speed_reducer:  dict      Data dictionary specifying speed
                                         reducer parameters
     Outputs:            Ng:  scalar    Speed ratio from input pinion shaft
@@ -304,3 +308,45 @@ def F_net(omega, terrain_angle, rover, planet, Crr):
     Fnet = Fd + Frr + Fg # signs are handled in individual functions
     
     return Fnet
+
+
+def motorW(v, rover):
+    '''
+    Compute the rotational speed of the motor shaft [rad/s] given the translational velocity of the rover and the rover
+    dictionary.
+    This function should be “vectorized” such that if given a vector of rover velocities it returns a vector the same size
+    containing the corresponding motor speeds.
+
+    Inputs
+    ------
+    v: scalar or 1D numpy array
+        Rover translational velocity [m/s]
+    rover: dict
+        Data structure containing rover parameters
+
+    Outputs
+    -------
+    w: scalar or 1D numpy array
+        Motor speed [rad/s]
+        Return argument should match type/size of input
+    '''
+
+    # check that the velocity argument is a scalar or numpy array
+    if (type(v) != int) and (type(v) != float) and (not isinstance(v, np.ndarray)):
+        raise ValueError('1st argument \'v\' must be a scalar or a numpy array')
+    # make v a numpy array if it's a scalar
+    if not isinstance(v, np.ndarray):
+        v = np.array([v])
+    # check that the vector is 1D
+    if len(np.shape(v)) != 1:
+        raise ValueError('1st argument \'v\' must be a scalar or a vector. Matricies are not allowed.')
+
+    try:
+        gear_ratio = get_gear_ratio(rover['speed_reducer'])  # ratio of gearbox input shaft speed to output shaft speed
+        wheel_w = v / rover['wheel_assembly']['wheel']['radius']  # rotational velocity of the wheel [rad/s]
+    except KeyError as e:
+        raise ValueError(f'Invalid rover dictionary: {e}')
+
+    motor_w = wheel_w * gear_ratio
+
+    return motor_w
