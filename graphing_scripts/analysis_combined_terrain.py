@@ -1,4 +1,7 @@
+import sys
+sys.path.append('../')
 from subfunctions import *
+import define_rovers
 import matplotlib.pyplot as plt
 from scipy.optimize import root_scalar
 import numpy as np
@@ -6,6 +9,10 @@ import numpy as np
 # the code works great, don't worry about this
 import warnings
 warnings.filterwarnings("ignore")
+
+# this is a band aid to make the code work, the new subfunctions.py file doesn't define MARVIN_DICT
+# we might eventually want to change this to a function that takes in a rover name
+MARVIN_DICT = define_rovers.rover_1_dict
 
 def main(save_plots=False):
     # initialize domain of interest

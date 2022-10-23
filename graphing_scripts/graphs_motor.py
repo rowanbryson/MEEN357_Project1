@@ -1,6 +1,13 @@
+import sys
+sys.path.append('../')
+import define_rovers
 from subfunctions import *
 import matplotlib.pyplot as plt
 import numpy as np
+
+# this is a band aid to make the code work, the new subfunctions.py file doesn't define MARVIN_DICT
+# we might eventually want to change this to a function that takes in a rover name
+MARVIN_DICT = define_rovers.rover_1_dict
 
 def main(save_plots=False):
     motor_shaft_speed = np.linspace(0.0, 4.0, num=100)

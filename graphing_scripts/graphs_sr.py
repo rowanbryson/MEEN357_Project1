@@ -1,7 +1,13 @@
+import sys
+sys.path.append('../')
 from subfunctions import *
+import define_rovers
 import matplotlib.pyplot as plt
 import numpy as np
 
+# this is a band aid to make the code work, the new subfunctions.py file doesn't define MARVIN_DICT
+# we might eventually want to change this to a function that takes in a rover name
+MARVIN_DICT = define_rovers.rover_1_dict
 
 def main(save_plots=False):
     
