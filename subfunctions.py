@@ -350,3 +350,26 @@ def motorW(v, rover):
     motor_w = wheel_w * gear_ratio
 
     return motor_w
+
+
+def simulate_rover(rover, planet, experiment, end_event):
+    '''
+    This function integrates the trajectory of a rover.
+
+    Inputs
+    ------
+    rover: dict
+        Data structure containing the parameters of the rover
+    planet: dict
+        Data structure containing the planet definition
+    experiment: dict
+        Data structure containing parameters of the trajectory to be followed by the rover
+    end_event: dict
+        Data structure containing the conditions necessary and sufficient to terminate simulation of rover dynamics
+    
+    Outputs
+    -------
+    rover: dict
+        Data structure containing the parameters of the rover, including updated telemetry information.
+    '''
+    pass
