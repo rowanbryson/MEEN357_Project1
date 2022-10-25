@@ -7,6 +7,7 @@
 
 import math
 import numpy as np
+from scipy.interpolate import interp1d
 
 def get_mass(rover):
     """
@@ -350,3 +351,119 @@ def motorW(v, rover):
     motor_w = wheel_w * gear_ratio
 
     return motor_w
+
+def rover_dynamics(t, y, rover, planet, experiment):
+    '''
+    Compute the derivative of the [velocity, position] vector for the rover given it's current state
+
+    Inputs
+    ------
+    t: scalar
+        Time sample [s]
+
+    y: 1D numpy array
+        Two element array of dependent variables
+        First element is rover velocity[m/s], second is rover position [m]
+
+    rover: Dict
+        Data structure containing rover definition
+
+    planet: Dict
+        Data structure containing planet definition
+
+    experiment: Dict
+        Data structure containing experiment defintion
+
+    Outputs
+    -------
+    dydt: 1D numpy array
+        Two element array of first derivatives of state vector
+        First element is rover acceleration [m/s^2] and second is rover velocity [m/s]  
+    '''
+    # check that t is a scalar
+    if (type(t) != int) and (type(t) != float):
+        raise Exception ("argument one must be a scalar")
+
+    # check that y is a np array
+    if not isinstance(y, np.ndarray):
+        raise Exception("argument two must be a numpy array")
+    # check that the vector is 1D
+    if len(np.shape(y)) != 1:
+        raise TypeError('2nd argument \'y\' must be a vector. Matricies are not allowed.')
+    #check that y only has two elements
+    if len(y) != 2:
+        raise Exception("y must only contain two elements, acceleration and velocity")
+
+    # check that rover, planet, and experiment are dicitonaries 
+    if (type(rover) != dict) or (type(planet) != dict) or (type(experiment) != dict):
+        raise Exception("Third, fourth and fifth arguments must be dictionaries")
+        
+    # define alpha_fun
+    alpha_fun = interp1d(experiment['alpha_dist'], experiment['alpha_deg'], kind = 'cubic', fill_value = 'extrapolate') 
+    
+    dydt = np.zeros(len(y), dtype=float)
+    
+    terrain_angle = float(alpha_fun(y[1]))
+    
+    #Veloctiy is first element in array
+    velocity = float(y[0])
+    
+    #calculate accelertation based off a= (1/mass) * Fnet
+    a = (1/get_mass(rover)) * F_net(motorW(velocity, rover), terrain_angle, rover, planet, experiment['Crr'])
+    
+    # 1st element is calculated a, 2nd element is velocity
+    dydt[0] = a
+    dydt[1] = y[1]
+    
+    
+    return dydt
+
+def mechpower(v, rover):
+    '''
+    Computes the instantaneous mechanical power output by a single DC motor at each point in a given velocity profile
+
+    Inputs
+    ------
+    v: 1D numpy array
+        Rover velocity data from a simulation [m/s]
+    rover: Dict
+        Data structure containing rover definition
+
+    Outputs
+    -------
+    p: 1D numpy array or scalar
+        Instantneous power output of a single motor corresponding to each element in v [W]
+        Return argument should be the same size as v
+    '''
+    #check if v is scalar or vector
+    if (type(v) != int) and (type(v) != float) and (not isinstance(v, np.ndarray)):
+        raise Exception("1st argument must be a scalar or vector")
+    
+    #check if rover is dict
+    if (type(rover) != dict):
+        raise Exception("2nd argument must be a dictionary")
+        
+    torque = tau_dcmotor(motorW(v, rover), rover['wheel_assembly']['motor'])
+    w = motorW(v, rover)
+    
+    if (type(v) == int) or (type(v) == float):
+        
+        #find power if given single scalar
+        k = 0
+        p = torque[k]*w[k]
+        
+    else:
+        
+        # check that the vector is 1D
+        if len(np.shape(v)) != 1:
+            raise TypeError('1st argument \'v\' must be a vector. Matricies are not allowed.')   
+        
+        # power = torque * omega
+        p = np.zeros(len(v), dtype=float)
+
+        #find power for each velocity given
+        for k in range(len(v)):
+            p[k] = torque[k] * w[k]
+            
+
+    return p
