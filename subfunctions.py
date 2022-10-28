@@ -403,6 +403,7 @@ def rover_dynamics(t, y, rover, planet, experiment):
     
     dydt = np.zeros(len(y), dtype=float)
     
+    #terrain angle is interpolated position
     terrain_angle = float(alpha_fun(y[1]))
     
     #Veloctiy is first element in array
@@ -413,8 +414,7 @@ def rover_dynamics(t, y, rover, planet, experiment):
     
     # 1st element is calculated a, 2nd element is velocity
     dydt[0] = a
-    dydt[1] = y[1]
-    
+    dydt[1] = y[0]
     
     return dydt
 
