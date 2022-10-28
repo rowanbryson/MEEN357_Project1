@@ -11,7 +11,7 @@ from tkinter.ttk import Style
 import numpy as np
 from scipy.interpolate import interp1d
 from functools import partial
-from scipy.integrate import solve_ivp, simpson
+from scipy.integrate import solve_ivp, simpson, cumulative_trapezoid
 from matplotlib import pyplot as plt
 from typing import Union
 
@@ -555,94 +555,44 @@ def battenergy(t, v, rover, quick_plot=False):
     E: scalar
         Total electrical energy consumed from the battery pack [J]
     """
+    # get an interpolated function for the battery efficiency
+    motor = rover['wheel_assembly']['motor']
+    motor_effcy_func = interp1d(motor['effcy_tau'], motor['effcy'], kind='cubic', fill_value='extrapolate')
 
-    # Input Validation
-
-    # check that the time and velocity arguments are numpy arrays
-    if not isinstance(t, np.ndarray) or not isinstance(v, np.ndarray):
-        raise TypeError('1st and 2nd arguments must be numpy arrays')
-    # check that the time and velocity arguments are 1D
-    if len(np.shape(t)) != 1 or len(np.shape(v)) != 1:
-        raise TypeError('1st and 2nd arguments must be vectors. Matricies are not allowed.')
-    # check that the time and velocity arguments are the same size
-    if len(t) != len(v):
-        raise TypeError('1st and 2nd arguments must be the same size')
-    # check that the rover argument is a dict
-    if type(rover) != dict:
-        raise TypeError('3rd argument must be a dict')
-    # check that the rover dictionary contains the required keys
-    try:
-        motor = rover['wheel_assembly']['motor']
-    except KeyError as e:
-        raise KeyError(f'Invalid rover dictionary, could not find key: {e}')
-
-    # Main Code
-
-    effcy_tau = motor['effcy_tau']
-    effcy = motor['effcy']
-    effcy_fun = interp1d(effcy_tau, effcy, kind='cubic') # interpolate efficiency data
-
-    if quick_plot:
-        from matplotlib import pyplot as plt
-        fig, ax = plt.subplots(2, 1)
-        ax[0].plot(effcy_tau, effcy)
-        ax[0].set_title('Motor Efficiency from linear fit')
-        ax[0].set_xlabel('Motor Torque [Nm]')
-        ax[0].set_ylabel('Motor Efficiency')
-        interp_x = np.linspace(effcy_tau[0], effcy_tau[-1], 1000)
-        ax[1].plot(interp_x, effcy_fun(interp_x))
-        ax[1].set_title('Motor Efficiency from cubic interpolation')
-        ax[1].set_xlabel('Motor Torque [Nm]')
-        ax[1].set_ylabel('Motor Efficiency')
-        plt.tight_layout()
-        plt.show()
-
-
-    # compute the mechanical power output of each motor
-    p = mechpower(v, rover)
+    # get the total mechanical power output by the motors at each velocity
+    mechanical_power_vals = 6 * mechpower(v, rover)
 
     if quick_plot:
         fig, ax = plt.subplots()
-        ax.plot(v, p)
-        ax.set_title('Mechanical Power Output of Each Motor')
-        ax.set_xlabel('Velocity [m/s]')
-        ax.set_ylabel('Mechanical Power [W]')
+        ax.plot(motor['effcy_tau'], motor['effcy'], label='Data')
+        interp_x = np.linspace(motor['effcy_tau'][0], motor['effcy_tau'][-1], 1000)
+        ax.plot(interp_x, motor_effcy_func(interp_x), label='Interpolation')
+        ax.set_title('Motor Efficiency vs. Mechanical Power')
+        ax.set_xlabel('Mechanical Power [W]')
+        ax.set_ylabel('Motor Efficiency')
+        ax.legend()
         plt.show()
 
-    # compute the electrical power input to each motor
-    omega = motorW(v, rover)
-    tau = tau_dcmotor(omega, rover['wheel_assembly']['motor'])
-    print(tau)
+    # get the battery efficiency at each mechanical power value
+    motor_effcy = motor_effcy_func(tau_dcmotor(motorW(v, rover), motor))
+    # get the total electrical power consumed by the motors at each velocity
+    electrical_power = mechanical_power_vals / motor_effcy
+
+    # integrate the electrical power to get the total electrical energy consumed
+    trapazoid_answer = cumulative_trapezoid(electrical_power, t)[-1] # trapanzoidal answer is closer to the value provided by prof
+    simpson_answer = simpson(electrical_power, t)
 
     if quick_plot:
+        print(f'Trapazoid answer: {trapazoid_answer}')
+        print(f'Simpson answer: {simpson_answer}')
         fig, ax = plt.subplots()
-        ax.plot(omega, tau)
-        ax.set_title('Motor Torque vs. Motor Speed')
-        ax.set_xlabel('Motor Speed [rad/s]')
-        ax.set_ylabel('Motor Torque [Nm]')
+        ax.scatter(t, electrical_power)
+        ax.set_title('Electrical Power vs. Time')
+        ax.set_xlabel('Time [s]')
+        ax.set_ylabel('Electrical Power [W]')
         plt.show()
     
-    motor_effcy = effcy_fun(tau)
-    e = p / motor_effcy 
-    total_e = 6 * e 
-
-    if quick_plot:
-        fig, ax = plt.subplots(2)
-        ax[0].plot(v, motor_effcy)
-        ax[0].set_title('Motor Efficiency vs. Velocity')
-        ax[0].set_xlabel('Velocity [m/s]')
-        ax[0].set_ylabel('Motor Efficiency')
-        ax[1].plot(v, total_e)
-        ax[1].set_title('Total Electrical Power Input')
-        ax[1].set_xlabel('Velocity [m/s]')
-        ax[1].set_ylabel('Electrical Power [W]')
-        plt.show()
-
-    # compute the total electrical energy consumed from the battery pack
-    E = simpson(total_e, t, dx=0.1)
-
-    return E
-
+    return simpson_answer
 
 def simulate_rover(rover: dict, planet: dict, experiment: dict, end_event: dict=None, quick_plot: bool=False) -> dict:
     '''

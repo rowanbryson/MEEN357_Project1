@@ -59,8 +59,8 @@ def test_rover_dynamics():
 
 def test_batt_energy():
     rover = define_rovers.rover1()
-    t = np.array([0, 1, 2, 3, 4, 5, 6, 7])
-    v = np.array([0, 1, 2, 6, 10, 2, 1, 1])
+    t = np.array([0, 1, 2, 3, 4, 5, 6])
+    v = np.array([0.33, 0.32, 0.33, 0.2, 0.2, 0.25, 0.28])
     print(battenergy(t, v, rover, quick_plot=True))
 
 def test_mech_power():
@@ -80,6 +80,13 @@ def test_taudcmotor():
     plt.ylabel('torque [Nm]')
     plt.show()
 
+def get_motor_effcy():
+    v = 0.25
+    rover = define_rovers.rover1()
+    motor = rover['wheel_assembly']['motor']
+    motor_effcy_interp = interp1d(motor['effcy_tau'], motor['effcy'], kind='cubic')
+    print(motor_effcy_interp(v))
+
 if __name__ == '__main__':
     # test_1()
     # test_motorW()
@@ -88,3 +95,4 @@ if __name__ == '__main__':
     test_batt_energy()
     # test_mech_power()
     # test_taudcmotor()
+    # get_motor_effcy()
