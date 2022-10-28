@@ -22,7 +22,7 @@ def rover1():
                 # N-element array of torque data points at which efficiency data is gathered [N-m]
                 'effcy_tau': np.array([0, 10, 20, 40, 75, 165]),
                 # N-element array of efficiency measurements corresponding to torque data [-]
-                'effcy': np.array([0, 0.60, 0.75, 0.73, 0.55, 0.5])
+                'effcy': np.array([0, 0.60, 0.75, 0.73, 0.55, 0.05])
             }
         },
         'chassis': {

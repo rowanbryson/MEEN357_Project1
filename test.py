@@ -348,5 +348,71 @@ class TestMotorW(unittest.TestCase):
             motorW(v, rover)
 
 
+class Testmechpower(unittest.TestCase):
+    def setUp(self) -> None:
+        self.default_rover = define_rovers.rover1()
+
+    def test_nparray(self):
+        v = np.array([0.05, 0.25])
+        expected = np.array([75.1, 142])
+        actual = mechpower(v, self.default_rover)
+        self.assertTrue(np.allclose(actual, expected, atol=1))
+
+    def test_float(self):
+        v = 0.05
+        expected = 75.1
+        actual = mechpower(v, self.default_rover)
+        self.assertTrue(np.allclose(actual, expected, atol=1e-1))
+
+    def test_string_exception(self):
+        v = '1'
+        with self.assertRaises(TypeError):
+            mechpower(v, self.default_rover)
+
+    def test_list_exception(self):
+        v = [1]
+        with self.assertRaises(TypeError):
+            mechpower(v, self.default_rover)
+
+    def test_invalid_rover_exception(self):
+        v = 1.0
+        rover = copy.deepcopy(self.default_rover)
+        del rover['wheel_assembly']['speed_reducer']
+        with self.assertRaises(KeyError):
+            mechpower(v, rover)
+    
+
+class Testbattenergy(unittest.TestCase):
+    def setUp(self) -> None:
+        self.default_rover = define_rovers.rover1()
+
+    def test_nparray(self):
+        v = np.array([0, 1, 2, 3, 4, 5, 6])
+        t = np.array([0.33, 0.32, 0.33, 0.2, 0.2, 0.25, 0.28])
+        expected = 6.8e+03
+        actual = battenergy(t, v, self.default_rover)
+        self.assertTrue(np.allclose(actual, expected, atol=1e-1))
+    
+    def test_string_exception(self):
+        v = '1'
+        t = '1'
+        with self.assertRaises(TypeError):
+            battenergy(t, v, self.default_rover)
+    
+    def test_list_exception(self):
+        v = [1]
+        t = [1]
+        with self.assertRaises(TypeError):
+            battenergy(t, v, self.default_rover)
+    
+    def test_invalid_rover_exception(self):
+        v = np.array([1])
+        t = np.array([1])
+        rover = copy.deepcopy(self.default_rover)
+        del rover['wheel_assembly']['motor']
+        with self.assertRaises(KeyError):
+            battenergy(t, v, rover)
+
+
 if __name__ == '__main__':
     unittest.main()

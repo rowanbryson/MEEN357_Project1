@@ -437,11 +437,11 @@ def mechpower(v, rover):
     '''
     #check if v is scalar or vector
     if (type(v) != int) and (type(v) != float) and (not isinstance(v, np.ndarray)):
-        raise Exception("1st argument must be a scalar or vector")
+        raise TypeError("1st argument must be a scalar or vector")
     
     #check if rover is dict
     if (type(rover) != dict):
-        raise Exception("2nd argument must be a dictionary")
+        raise TypeError("2nd argument must be a dictionary")
         
     torque = tau_dcmotor(motorW(v, rover), rover['wheel_assembly']['motor'])
     w = motorW(v, rover)
@@ -467,3 +467,67 @@ def mechpower(v, rover):
             
 
     return p
+
+
+def battenergy(t, v, rover): 
+    """
+    This function computes the total electrical energy consumed from the rover battery pack over a simulation profile, 
+    defined as time-velocity pairs. This function assumes all 6 motors are driven from the same battery pack (i.e., this 
+    function accounts for energy consumed by all motors). 
+
+    Inputs:
+    t: 1D numpy array
+        Time vector [s]
+    v: 1D numpy array
+        Velocity vector [m/s]
+    rover: dict
+        Data structure containing rover parameters
+
+    Outputs:
+    E: scalar
+        Total electrical energy consumed from the battery pack [J]
+    """
+
+    # Input Validation
+
+    # check that the time and velocity arguments are numpy arrays
+    if not isinstance(t, np.ndarray) or not isinstance(v, np.ndarray):
+        raise TypeError('1st and 2nd arguments must be numpy arrays')
+    # check that the time and velocity arguments are 1D
+    if len(np.shape(t)) != 1 or len(np.shape(v)) != 1:
+        raise TypeError('1st and 2nd arguments must be vectors. Matricies are not allowed.')
+    # check that the time and velocity arguments are the same size
+    if len(t) != len(v):
+        raise TypeError('1st and 2nd arguments must be the same size')
+    # check that the rover argument is a dict
+    if type(rover) != dict:
+        raise TypeError('3rd argument must be a dict')
+    # check that the rover dictionary contains the required keys
+    try:
+        motor = rover['wheel_assembly']['motor']
+    except KeyError as e:
+        raise KeyError(f'Invalid rover dictionary, could not find key: {e}')
+
+    # Main Code
+
+    effcy_tau = rover['wheel_assembly']['motor']['effcy_tau']
+    effcy = rover['wheel_assembly']['motor']['effcy']
+    effcy_fun = interp1d(effcy_tau, effcy, kind='cubic') # interpolate efficiency data
+
+    # compute the mechanical power output of each motor
+    p = mechpower(v, rover)
+    print(p)
+
+    # compute the electrical power input to each motor
+    omega = motorW(v, rover)
+    tau = tau_dcmotor(omega, rover['wheel_assembly']['motor'])
+    print(tau)
+    
+    motor_effcy = effcy_fun(tau)
+    e = p / motor_effcy 
+    total_e = 6 * e 
+
+    # compute the total electrical energy consumed from the battery pack
+    E = np.trapz(total_e, t)
+
+    return E
