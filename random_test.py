@@ -85,6 +85,6 @@ if __name__ == '__main__':
     # test_motorW()
     # test_simulate_rover()
     # test_rover_dynamics()
-    # test_batt_energy()
-    test_mech_power()
+    test_batt_energy()
+    # test_mech_power()
     # test_taudcmotor()

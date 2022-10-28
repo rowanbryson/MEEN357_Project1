@@ -486,11 +486,37 @@ def mechpower(v, rover, quick_plot=False):
     if (type(rover) != dict):
         raise TypeError("2nd argument must be a dictionary")
         
+    INPUT_TYPE = type(v)
+    v = np.array(v)
+
     torque = tau_dcmotor(motorW(v, rover), rover['wheel_assembly']['motor'])
     w = motorW(v, rover)
+    power = torque * w
+
+    # if (type(v) == int) or (type(v) == float) or isinstance(v, np.ScalarType):
+        
+    #     #find power if given single scalar
+    #     k = 0
+    #     p = torque[k]*w[k]
+        
+    # else:
+        
+    #     # check that the vector is 1D
+    #     if len(np.shape(v)) != 1:
+    #         raise TypeError('1st argument \'v\' must be a vector. Matricies are not allowed.')   
+        
+    #     # power = torque * omega
+    #     p = np.zeros(len(v), dtype=float)
+
+    #     #find power for each velocity given
+    #     for k in range(len(v)):
+    #         p[k] = torque[k] * w[k]
+            
+    if not INPUT_TYPE == np.ndarray:
+        power = power[0]
 
     if quick_plot:
-        fig, ax = plt.subplots(3, 1)
+        fig, ax = plt.subplots(4, 1)
         ax[0].plot(v, torque)
         ax[0].set_xlabel('Velocity [m/s]')
         ax[0].set_ylabel('Torque [Nm]')
@@ -500,30 +526,13 @@ def mechpower(v, rover, quick_plot=False):
         ax[2].plot(v, w)
         ax[2].set_xlabel('Velocity [m/s]')
         ax[2].set_ylabel('Motor Speed [rad/s]')
+        ax[3].plot(v, power)
+        ax[3].set_xlabel('Velocity [m/s]')
+        ax[3].set_ylabel('Power [W]')
         fig.tight_layout()
         plt.show()
-    
-    if (type(v) == int) or (type(v) == float) or isinstance(v, np.ScalarType):
-        
-        #find power if given single scalar
-        k = 0
-        p = torque[k]*w[k]
-        
-    else:
-        
-        # check that the vector is 1D
-        if len(np.shape(v)) != 1:
-            raise TypeError('1st argument \'v\' must be a vector. Matricies are not allowed.')   
-        
-        # power = torque * omega
-        p = np.zeros(len(v), dtype=float)
 
-        #find power for each velocity given
-        for k in range(len(v)):
-            p[k] = torque[k] * w[k]
-            
-
-    return p
+    return power
 
 
 def battenergy(t, v, rover, quick_plot=False): 
@@ -591,13 +600,13 @@ def battenergy(t, v, rover, quick_plot=False):
     p = mechpower(v, rover)
     print(p)
 
-    if quick_plot:
-        fig, ax = plt.subplots()
-        ax.plot(v, p)
-        ax.set_title('Mechanical Power Output of Each Motor')
-        ax.set_xlabel('Velocity [m/s]')
-        ax.set_ylabel('Mechanical Power [W]')
-        plt.show()
+    # if quick_plot:
+    #     fig, ax = plt.subplots()
+    #     ax.plot(v, p)
+    #     ax.set_title('Mechanical Power Output of Each Motor')
+    #     ax.set_xlabel('Velocity [m/s]')
+    #     ax.set_ylabel('Mechanical Power [W]')
+    #     plt.show()
 
     # compute the electrical power input to each motor
     omega = motorW(v, rover)
