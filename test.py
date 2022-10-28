@@ -311,6 +311,18 @@ class TestMotorW(unittest.TestCase):
     def setUp(self) -> None:
         self.default_rover = define_rovers.rover1()
 
+    def test_from_slide_1(self):
+        v = np.array([0.1])
+        expected = np.array([1.02])
+        actual = motorW(v, self.default_rover)
+        self.assertTrue(np.allclose(actual, expected, atol=1e-2))
+
+    def test_from_slide_2(self):
+        v = np.array([0.3])
+        expected = np.array([3.06])
+        actual = motorW(v, self.default_rover)
+        self.assertTrue(np.allclose(actual, expected, atol=1e-2))
+
     def test_nparray(self):
         v = np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
         expected = np.array([0, 10.20833333, 20.41666667, 30.625, 40.83333333,
@@ -348,9 +360,21 @@ class TestMotorW(unittest.TestCase):
             motorW(v, rover)
 
 
-class Testmechpower(unittest.TestCase):
+class TestMechPower(unittest.TestCase):
     def setUp(self) -> None:
         self.default_rover = define_rovers.rover1()
+
+    def test_from_slide_1(self):
+        v = np.array([0.05])
+        expected = np.array([75.1])
+        actual = mechpower(v, self.default_rover)
+        self.assertTrue(np.allclose(actual, expected, atol=1e-1))
+
+    def test_from_slide_2(self):
+        v = np.array([0.25])
+        expected = np.array([142])
+        actual = mechpower(v, self.default_rover)
+        self.assertTrue(np.allclose(actual, expected, atol=1e0))
 
     def test_nparray(self):
         v = np.array([0.05, 0.25])
@@ -386,12 +410,14 @@ class Testbattenergy(unittest.TestCase):
     def setUp(self) -> None:
         self.default_rover = define_rovers.rover1()
 
-    def test_nparray(self):
-        v = np.array([0, 1, 2, 3, 4, 5, 6])
-        t = np.array([0.33, 0.32, 0.33, 0.2, 0.2, 0.25, 0.28])
-        expected = 6.8e+03
+    def test_case_from_slide_1(self):
+        t = np.array([0, 1, 2, 3, 4, 5, 6])
+        v = np.array([0.33, 0.32, 0.33, 0.2, 0.2, 0.25, 0.28])
+        expected = 6.8e3
         actual = battenergy(t, v, self.default_rover)
-        self.assertTrue(np.allclose(actual, expected, atol=1e-1))
+        # self.assertTrue(np.allclose(actual, expected, atol=1e-1))
+        # assert allmost equal with unittest assertAlmostEqual
+        self.assertAlmostEqual(actual, expected, places=1)
     
     def test_string_exception(self):
         v = '1'

@@ -13,6 +13,7 @@ from scipy.interpolate import interp1d
 from functools import partial
 from scipy.integrate import solve_ivp, simpson
 from matplotlib import pyplot as plt
+from typing import Union
 
 def get_mass(rover):
     """
@@ -376,14 +377,14 @@ def motorW(v, rover):
     '''
 
     # check that the velocity argument is a scalar or numpy array
-    if (type(v) != int) and (type(v) != float) and (not isinstance(v, np.ndarray)):
+    if (type(v) != int) and (type(v) != float) and (np.ScalarType) and (not isinstance(v, np.ndarray)):
         raise TypeError('1st argument \'v\' must be a scalar or a numpy array')
     # make v a numpy array if it's a scalar
-    if not isinstance(v, np.ndarray):
-        v = np.array([v])
+    # if not isinstance(v, np.ndarray):
+    #     v = np.array([v])
     # check that the vector is 1D
-    if len(np.shape(v)) != 1:
-        raise TypeError('1st argument \'v\' must be a scalar or a vector. Matricies are not allowed.')
+    if isinstance(v, np.ndarray) and len(np.shape(v)) != 1:
+        raise TypeError(f'1st argument \'v\' must be a scalar or a vector, not {type(v)} Matricies are not allowed. np.shape(v) = {np.shape(v)}')
 
     try:
         gear_ratio = get_gear_ratio(rover['wheel_assembly']['speed_reducer'])  # ratio of gearbox input shaft speed to output shaft speed
@@ -391,7 +392,7 @@ def motorW(v, rover):
     except KeyError as e:
         raise KeyError(f'Invalid rover dictionary, could not find key: {e}')
 
-    motor_w = wheel_w / gear_ratio
+    motor_w = wheel_w * gear_ratio
 
     return motor_w
 
@@ -479,15 +480,16 @@ def mechpower(v, rover, quick_plot=False):
         Return argument should be the same size as v
     '''
     #check if v is scalar or vector
-    if (type(v) != int) and (type(v) != float) and (not isinstance(v, np.ndarray)):
-        raise TypeError("1st argument must be a scalar or vector")
+    if (type(v) != int) and (type(v) != float) and (not isinstance(v, np.ndarray)) and (not isinstance(v, np.ScalarType)):
+        raise TypeError(f"1st argument must be a scalar or vector, not {type(v)}")
     
     #check if rover is dict
     if (type(rover) != dict):
         raise TypeError("2nd argument must be a dictionary")
         
     INPUT_TYPE = type(v)
-    v = np.array(v)
+    if not isinstance(v, np.ndarray):
+        v = np.array([v])
 
     torque = tau_dcmotor(motorW(v, rover), rover['wheel_assembly']['motor'])
     w = motorW(v, rover)
@@ -576,8 +578,8 @@ def battenergy(t, v, rover, quick_plot=False):
 
     # Main Code
 
-    effcy_tau = rover['wheel_assembly']['motor']['effcy_tau']
-    effcy = rover['wheel_assembly']['motor']['effcy']
+    effcy_tau = motor['effcy_tau']
+    effcy = motor['effcy']
     effcy_fun = interp1d(effcy_tau, effcy, kind='cubic') # interpolate efficiency data
 
     if quick_plot:
@@ -600,25 +602,45 @@ def battenergy(t, v, rover, quick_plot=False):
     p = mechpower(v, rover)
     print(p)
 
-    # if quick_plot:
-    #     fig, ax = plt.subplots()
-    #     ax.plot(v, p)
-    #     ax.set_title('Mechanical Power Output of Each Motor')
-    #     ax.set_xlabel('Velocity [m/s]')
-    #     ax.set_ylabel('Mechanical Power [W]')
-    #     plt.show()
+    if quick_plot:
+        fig, ax = plt.subplots()
+        ax.plot(v, p)
+        ax.set_title('Mechanical Power Output of Each Motor')
+        ax.set_xlabel('Velocity [m/s]')
+        ax.set_ylabel('Mechanical Power [W]')
+        plt.show()
 
     # compute the electrical power input to each motor
     omega = motorW(v, rover)
     tau = tau_dcmotor(omega, rover['wheel_assembly']['motor'])
     print(tau)
+
+    if quick_plot:
+        fig, ax = plt.subplots()
+        ax.plot(omega, tau)
+        ax.set_title('Motor Torque vs. Motor Speed')
+        ax.set_xlabel('Motor Speed [rad/s]')
+        ax.set_ylabel('Motor Torque [Nm]')
+        plt.show()
     
     motor_effcy = effcy_fun(tau)
     e = p / motor_effcy 
     total_e = 6 * e 
 
+    if quick_plot:
+        fig, ax = plt.subplots(2)
+        ax[0].plot(v, motor_effcy)
+        ax[0].set_title('Motor Efficiency vs. Velocity')
+        ax[0].set_xlabel('Velocity [m/s]')
+        ax[0].set_ylabel('Motor Efficiency')
+        ax[1].plot(v, total_e)
+        ax[1].set_title('Total Electrical Power Input')
+        ax[1].set_xlabel('Velocity [m/s]')
+        ax[1].set_ylabel('Electrical Power [W]')
+        plt.show()
+
     # compute the total electrical energy consumed from the battery pack
-    E = np.trapz(total_e, t)
+    E = simpson(total_e, t, dx=0.1)
 
     return E
 
