@@ -399,7 +399,7 @@ class TestMechPower(unittest.TestCase):
             mechpower(v, self.default_rover)
 
     def test_invalid_rover_exception(self):
-        v = 1.0
+        v = np.array([1.0])
         rover = copy.deepcopy(self.default_rover)
         del rover['wheel_assembly']['speed_reducer']
         with self.assertRaises(KeyError):

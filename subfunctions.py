@@ -600,7 +600,6 @@ def battenergy(t, v, rover, quick_plot=False):
 
     # compute the mechanical power output of each motor
     p = mechpower(v, rover)
-    print(p)
 
     if quick_plot:
         fig, ax = plt.subplots()
