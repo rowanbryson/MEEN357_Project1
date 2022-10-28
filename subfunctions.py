@@ -7,6 +7,7 @@
 
 import math
 import numpy as np
+from scipy.integrate import solve_ivp
 
 def get_mass(rover):
     """
@@ -407,5 +408,37 @@ def simulate_rover(rover, planet, experiment, end_event):
     -------
     rover: dict
         Data structure containing the parameters of the rover, including updated telemetry information.
+        telemetry information is stored in the 'telemetry' key of the rover dictionary, with the following keys:
+
+            time: 1D numpy array
+                N-element array containing the time history of the rover [s]
+            completion_time: scalar
+                Time to complete a mission [s]
+            velocity: 1D numpy array
+                N-element array containing the velocity of the rover as it follows a trajectory [m/s]
+            position: 1D numpy array
+                N-element array containing the position of the rover as it follows a trajectory [m]
+            distance_traveled: scalar
+                Total distance traveled by the rover [m]
+            max_velocity: scalar
+                Maximum velocity of rover along a givien trajectory [m/s]
+            average_velocity: scalar
+                Average velocity of rover along a given trajectory [m/s]
+            power: 1D numpy array
+                N-element array containing the instantaneous power outputted by the motor along a trajectory [W]
+            battery_energy: scalar
+                Total energy to be extracted from the battery to complete trajectory [J]
+            energy_per_distance: scalar
+                Total energy spent (from battery) per meter traveled [J/m]
     '''
-    pass
+    def rover_dynamics(t, y):
+        # this is a temporary function, it will be replaced when the actual rover_dynamics function is done
+        v, s = y
+        dvdt = 0  # assume constant velocity for now
+        dsdt = v
+        return np.array([dvdt, dsdt]) 
+
+    time_span = experiment['time_range']
+    y0 = experiment['initial_conditions']
+
+    sol = solve_ivp(rover_dynamics, time_span, y0, events=end_of_mission_event(end_event), dense_output=True)
