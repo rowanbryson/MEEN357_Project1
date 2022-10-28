@@ -375,7 +375,7 @@ class Testmechpower(unittest.TestCase):
             mechpower(v, self.default_rover)
 
     def test_invalid_rover_exception(self):
-        v = 1.0
+        v = np.array([1.0])
         rover = copy.deepcopy(self.default_rover)
         del rover['wheel_assembly']['speed_reducer']
         with self.assertRaises(KeyError):
@@ -387,11 +387,11 @@ class Testbattenergy(unittest.TestCase):
         self.default_rover = define_rovers.rover1()
 
     def test_nparray(self):
-        v = np.array([0, 1, 2, 3, 4, 5, 6])
-        t = np.array([0.33, 0.32, 0.33, 0.2, 0.2, 0.25, 0.28])
+        t = np.array([0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0])
+        v = np.array([0.33, 0.32, 0.33, 0.2, 0.2, 0.25, 0.28])
         expected = 6.8e+03
         actual = battenergy(t, v, self.default_rover)
-        self.assertTrue(np.allclose(actual, expected, atol=1e-1))
+        self.assertTrue(np.allclose(actual, expected, atol=1e2))
     
     def test_string_exception(self):
         v = '1'

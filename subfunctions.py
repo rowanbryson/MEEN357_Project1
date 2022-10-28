@@ -391,7 +391,7 @@ def motorW(v, rover):
     except KeyError as e:
         raise KeyError(f'Invalid rover dictionary, could not find key: {e}')
 
-    motor_w = wheel_w / gear_ratio
+    motor_w = wheel_w * gear_ratio
 
     return motor_w
 
@@ -598,7 +598,6 @@ def battenergy(t, v, rover, quick_plot=False):
 
     # compute the mechanical power output of each motor
     p = mechpower(v, rover)
-    print(p)
 
     # if quick_plot:
     #     fig, ax = plt.subplots()
@@ -611,7 +610,6 @@ def battenergy(t, v, rover, quick_plot=False):
     # compute the electrical power input to each motor
     omega = motorW(v, rover)
     tau = tau_dcmotor(omega, rover['wheel_assembly']['motor'])
-    print(tau)
     
     motor_effcy = effcy_fun(tau)
     e = p / motor_effcy 
