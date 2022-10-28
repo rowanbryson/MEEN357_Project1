@@ -6,9 +6,13 @@
 ###########################################################################"""
 
 import math
+from tkinter import N
+from tkinter.ttk import Style
 import numpy as np
 from scipy.interpolate import interp1d
-from scipy.integrate import solve_ivp
+from functools import partial
+from scipy.integrate import solve_ivp, simpson
+from matplotlib import pyplot as plt
 
 def get_mass(rover):
     """
@@ -36,8 +40,10 @@ def get_mass(rover):
 def get_gear_ratio(speed_reducer):
     """
     !!! examples:
-        output_speed = input_speed / get_gear_ratio(speed_reducer)
-        output_torque = input_torque * get_gear_ratio(speed_reducer)
+        wheel_W = motor_W * get_gear_ratio(speed_reducer)
+        motor_W = wheel_W / get_gear_ratio(speed_reducer)
+        wheel_torque = motor_torque / get_gear_ratio(speed_reducer)
+        motor_torque = wheel_torque * get_gear_ratio(speed_reducer)
 
     Inputs:  speed_reducer:  dict      Data dictionary specifying speed
                                         reducer parameters
@@ -385,7 +391,7 @@ def motorW(v, rover):
     except KeyError as e:
         raise KeyError(f'Invalid rover dictionary, could not find key: {e}')
 
-    motor_w = wheel_w * gear_ratio
+    motor_w = wheel_w / gear_ratio
 
     return motor_w
 
@@ -418,12 +424,12 @@ def rover_dynamics(t, y, rover, planet, experiment):
         First element is rover acceleration [m/s^2] and second is rover velocity [m/s]  
     '''
     # check that t is a scalar
-    if (type(t) != int) and (type(t) != float):
-        raise Exception ("argument one must be a scalar")
+    if (type(t) != int) and (type(t) != float) and (not isinstance(t, np.ScalarType)):
+        raise Exception (f"argument one must be a scalar, not {type(t)}")
 
     # check that y is a np array
     if not isinstance(y, np.ndarray):
-        raise Exception("argument two must be a numpy array")
+        raise Exception(f"argument two must be a numpy array, not {type(y)}")
     # check that the vector is 1D
     if len(np.shape(y)) != 1:
         raise TypeError('2nd argument \'y\' must be a vector. Matricies are not allowed.')
@@ -455,7 +461,7 @@ def rover_dynamics(t, y, rover, planet, experiment):
     
     return dydt
 
-def mechpower(v, rover):
+def mechpower(v, rover, quick_plot=False):
     '''
     Computes the instantaneous mechanical power output by a single DC motor at each point in a given velocity profile
 
@@ -482,8 +488,22 @@ def mechpower(v, rover):
         
     torque = tau_dcmotor(motorW(v, rover), rover['wheel_assembly']['motor'])
     w = motorW(v, rover)
+
+    if quick_plot:
+        fig, ax = plt.subplots(3, 1)
+        ax[0].plot(v, torque)
+        ax[0].set_xlabel('Velocity [m/s]')
+        ax[0].set_ylabel('Torque [Nm]')
+        ax[1].plot(w, torque)
+        ax[1].set_xlabel('Motor Speed [rad/s]')
+        ax[1].set_ylabel('Torque [Nm]')
+        ax[2].plot(v, w)
+        ax[2].set_xlabel('Velocity [m/s]')
+        ax[2].set_ylabel('Motor Speed [rad/s]')
+        fig.tight_layout()
+        plt.show()
     
-    if (type(v) == int) or (type(v) == float):
+    if (type(v) == int) or (type(v) == float) or isinstance(v, np.ScalarType):
         
         #find power if given single scalar
         k = 0
@@ -506,7 +526,7 @@ def mechpower(v, rover):
     return p
 
 
-def battenergy(t, v, rover): 
+def battenergy(t, v, rover, quick_plot=False): 
     """
     This function computes the total electrical energy consumed from the rover battery pack over a simulation profile, 
     defined as time-velocity pairs. This function assumes all 6 motors are driven from the same battery pack (i.e., this 
@@ -551,9 +571,33 @@ def battenergy(t, v, rover):
     effcy = rover['wheel_assembly']['motor']['effcy']
     effcy_fun = interp1d(effcy_tau, effcy, kind='cubic') # interpolate efficiency data
 
+    if quick_plot:
+        from matplotlib import pyplot as plt
+        fig, ax = plt.subplots(2, 1)
+        ax[0].plot(effcy_tau, effcy)
+        ax[0].set_title('Motor Efficiency from linear fit')
+        ax[0].set_xlabel('Motor Torque [Nm]')
+        ax[0].set_ylabel('Motor Efficiency')
+        interp_x = np.linspace(effcy_tau[0], effcy_tau[-1], 1000)
+        ax[1].plot(interp_x, effcy_fun(interp_x))
+        ax[1].set_title('Motor Efficiency from cubic interpolation')
+        ax[1].set_xlabel('Motor Torque [Nm]')
+        ax[1].set_ylabel('Motor Efficiency')
+        plt.tight_layout()
+        plt.show()
+
+
     # compute the mechanical power output of each motor
     p = mechpower(v, rover)
     print(p)
+
+    if quick_plot:
+        fig, ax = plt.subplots()
+        ax.plot(v, p)
+        ax.set_title('Mechanical Power Output of Each Motor')
+        ax.set_xlabel('Velocity [m/s]')
+        ax.set_ylabel('Mechanical Power [W]')
+        plt.show()
 
     # compute the electrical power input to each motor
     omega = motorW(v, rover)
@@ -570,7 +614,7 @@ def battenergy(t, v, rover):
     return E
 
 
-def simulate_rover(rover, planet, experiment, end_event):
+def simulate_rover(rover: dict, planet: dict, experiment: dict, end_event: dict=None, quick_plot: bool=False) -> dict:
     '''
     This function integrates the trajectory of a rover.
 
@@ -582,8 +626,10 @@ def simulate_rover(rover, planet, experiment, end_event):
         Data structure containing the planet definition
     experiment: dict
         Data structure containing parameters of the trajectory to be followed by the rover
-    end_event: dict
+    end_event: dict (optional)
         Data structure containing the conditions necessary and sufficient to terminate simulation of rover dynamics
+        overrides experiment['end_event'] if both are provided
+        defaults to experiment['end_event'] if not provided
     
     Outputs
     -------
@@ -612,14 +658,57 @@ def simulate_rover(rover, planet, experiment, end_event):
             energy_per_distance: scalar
                 Total energy spent (from battery) per meter traveled [J/m]
     '''
-    def rover_dynamics(t, y):
-        # this is a temporary function, it will be replaced when the actual rover_dynamics function is done
-        v, s = y
-        dvdt = 0  # assume constant velocity for now
-        dsdt = v
-        return np.array([dvdt, dsdt]) 
+
+    if end_event is None:
+        end_event = experiment['end_event']
 
     time_span = experiment['time_range']
     y0 = experiment['initial_conditions']
 
-    sol = solve_ivp(rover_dynamics, time_span, y0, events=end_of_mission_event(end_event), dense_output=True)
+    rover_dynamics_partial = partial(rover_dynamics, rover=rover, planet=planet, experiment=experiment)
+    sol = solve_ivp(rover_dynamics_partial, time_span, y0, method='BDF', events=end_of_mission_event(end_event), dense_output=True, max_step=0.1)
+    t = sol.t
+    y = sol.y
+
+    telemetry = {
+        'time': t,
+        'completion_time': t[-1],
+        'velocity': y[0],
+        'position': y[1],
+        'distance_traveled': y[1][-1] - y[1][0],
+        'max_velocity': np.max(y[0]),
+        'average_velocity': (y[1][-1] - y[1][0])/t[-1],
+        'power': mechpower(y[0], rover),
+        'battery_energy': battenergy(t, y[0], rover),
+        'energy_per_distance': battenergy(t, y[0], rover)/(y[1][-1] - y[1][0])
+    }
+    rover = rover.copy()
+    rover['telemetry'] = telemetry
+    return rover
+
+
+
+
+    print(sol.message)
+    # figure out which event terminal event was triggered
+    if sol.status == 1:
+        end_event_index = None
+        ending_time = t[-1]
+        for ii, t_event in enumerate(sol.t_events):
+            if len(t_event) > 0:
+                if t_event[0] == ending_time:
+                    end_event_index = ii
+        end_event_reason = list(end_event.keys())[end_event_index]
+        print(f'Ending condition: {end_event_reason}')
+
+    if quick_plot:
+        import matplotlib.pyplot as plt
+        # make 2 by 1 plot of position and velocity
+        fig, ax = plt.subplots(2, 1)
+        ax[0].plot(t, y[0], color='orange', label='velocity')
+        ax[0].set_ylabel('velocity [m/s]')
+        ax[0].set_xlabel('time [s]')
+        ax[1].plot(t, y[1], color='blue' , label='position')
+        ax[1].set_ylabel('position [m]')
+        ax[1].set_xlabel('time [s]')
+        plt.show()

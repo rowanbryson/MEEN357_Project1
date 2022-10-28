@@ -26,4 +26,19 @@ def experiment1():
     
     return experiment, end_event
 
+def experiment2():
+    experiment = {'time_range' : np.array([0,20000]),
+                  'initial_conditions' : np.array([0.3125,0]),
+                  'alpha_dist' : np.array([0, 20, 40, 60, 80, 100]),
+                  'alpha_deg' : np.array([0, 60, 0, -60, 0, 0]),
+                  'Crr' : 0.1}
+    
+    
+    # Below are default values for example only:
+    end_event = {'max_distance' : 100,
+                 'max_time' : 5000,
+                 'min_velocity' : 0.01}
+
+    return experiment, end_event
+
 

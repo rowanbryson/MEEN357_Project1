@@ -4,6 +4,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d
 
+experiment, end_event = experiment2()
+
 #initalization of variables
 alpha_dist = experiment['alpha_dist']
 alpha_deg = experiment['alpha_deg']

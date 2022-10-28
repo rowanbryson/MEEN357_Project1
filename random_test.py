@@ -1,6 +1,15 @@
+from turtle import title
+import define_experiment
 from subfunctions import *
 import define_rovers
 import numpy as np
+from functools import partial
+import warnings
+try:
+    from rich import print
+except:
+    warnings.warn('I am using the print function from the rich module to make the output look nicer. You can install it with "pip install rich" -Jae')
+
 
 # this file is for testing functions quickly without writing test cases
 
@@ -32,6 +41,50 @@ def test_motorW():
     print(f'v: {v}')
     print(f'motorW(v): {motorW(v, rover)}')
 
+def test_simulate_rover():
+    rover = define_rovers.rover1()
+    planet = define_rovers.planet1()
+    experiment, end_event = define_experiment.experiment2()
+    rover_after = simulate_rover(rover, planet, experiment, end_event)
+    print(rover_after)
+    print(f'rovers are different? {rover_after is not rover}')
+
+def test_rover_dynamics():
+    rover = define_rovers.rover1()
+    planet = define_rovers.planet1()
+    experiment, end_event = define_experiment.experiment2()
+    rover_dp = partial(rover_dynamics, rover=rover, planet=planet, experiment=experiment)
+
+    print(rover_dp(0, np.array([0, 0])))
+
+def test_batt_energy():
+    rover = define_rovers.rover1()
+    t = np.array([0, 1, 2, 3, 4, 5, 6, 7])
+    v = np.array([0, 1, 2, 6, 10, 2, 1, 1])
+    print(battenergy(t, v, rover, quick_plot=True))
+
+def test_mech_power():
+    rover = define_rovers.rover1()
+    v = np.linspace(0, 10, 100)
+    plt.plot(v)
+    plt.ylabel('velocity [m/s]')
+    print(mechpower(v, rover, quick_plot=True))
+
+def test_taudcmotor():
+    rover = define_rovers.rover1()
+    motor = rover['wheel_assembly']['motor']
+    omega = np.linspace(-1, 4, 100)
+    torque = tau_dcmotor(omega, motor)
+    plt.plot(omega, torque)
+    plt.xlabel('omega [rad/s]')
+    plt.ylabel('torque [Nm]')
+    plt.show()
+
 if __name__ == '__main__':
     # test_1()
-    test_motorW()
+    # test_motorW()
+    # test_simulate_rover()
+    # test_rover_dynamics()
+    # test_batt_energy()
+    test_mech_power()
+    # test_taudcmotor()
