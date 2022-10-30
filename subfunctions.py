@@ -594,7 +594,7 @@ def battenergy(t, v, rover, quick_plot=False):
     
     return simpson_answer
 
-def simulate_rover(rover: dict, planet: dict, experiment: dict, end_event: dict=None, quick_plot: bool=False) -> dict:
+def simulate_rover(rover: dict, planet: dict, experiment: dict, end_event: dict=None, quick_plot: bool=False, expand: bool=False) -> dict:
     '''
     This function integrates the trajectory of a rover.
 
@@ -646,7 +646,7 @@ def simulate_rover(rover: dict, planet: dict, experiment: dict, end_event: dict=
     y0 = experiment['initial_conditions']
 
     rover_dynamics_partial = partial(rover_dynamics, rover=rover, planet=planet, experiment=experiment)
-    sol = solve_ivp(rover_dynamics_partial, time_span, y0, method='BDF', events=end_of_mission_event(end_event), dense_output=True, rtol=1e-10, atol=1e-10)
+    sol = solve_ivp(rover_dynamics_partial, time_span, y0, method='BDF', events=end_of_mission_event(end_event), dense_output=expand, rtol=1e-10, atol=1e-10)
     t = sol.t
     y = sol.y
 
@@ -662,33 +662,8 @@ def simulate_rover(rover: dict, planet: dict, experiment: dict, end_event: dict=
         'battery_energy': battenergy(t, y[0], rover),
         'energy_per_distance': battenergy(t, y[0], rover)/(y[1][-1] - y[1][0])
     }
+    if expand:
+        telemetry['sol'] = sol
     rover = rover.copy()
     rover['telemetry'] = telemetry
     return rover
-
-
-
-
-    print(sol.message)
-    # figure out which event terminal event was triggered
-    if sol.status == 1:
-        end_event_index = None
-        ending_time = t[-1]
-        for ii, t_event in enumerate(sol.t_events):
-            if len(t_event) > 0:
-                if t_event[0] == ending_time:
-                    end_event_index = ii
-        end_event_reason = list(end_event.keys())[end_event_index]
-        print(f'Ending condition: {end_event_reason}')
-
-    if quick_plot:
-        import matplotlib.pyplot as plt
-        # make 2 by 1 plot of position and velocity
-        fig, ax = plt.subplots(2, 1)
-        ax[0].plot(t, y[0], color='orange', label='velocity')
-        ax[0].set_ylabel('velocity [m/s]')
-        ax[0].set_xlabel('time [s]')
-        ax[1].plot(t, y[1], color='blue' , label='position')
-        ax[1].set_ylabel('position [m]')
-        ax[1].set_xlabel('time [s]')
-        plt.show()
