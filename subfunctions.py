@@ -646,7 +646,7 @@ def simulate_rover(rover: dict, planet: dict, experiment: dict, end_event: dict=
     y0 = experiment['initial_conditions']
 
     rover_dynamics_partial = partial(rover_dynamics, rover=rover, planet=planet, experiment=experiment)
-    sol = solve_ivp(rover_dynamics_partial, time_span, y0, method='BDF', events=end_of_mission_event(end_event), dense_output=True, max_step=0.1)
+    sol = solve_ivp(rover_dynamics_partial, time_span, y0, method='BDF', events=end_of_mission_event(end_event), dense_output=True, rtol=1e-10, atol=1e-10)
     t = sol.t
     y = sol.y
 

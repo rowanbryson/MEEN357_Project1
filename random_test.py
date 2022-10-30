@@ -44,10 +44,9 @@ def test_motorW():
 def test_simulate_rover():
     rover = define_rovers.rover1()
     planet = define_rovers.planet1()
-    experiment, end_event = define_experiment.experiment2()
+    experiment, end_event = define_experiment.experiment1()
     rover_after = simulate_rover(rover, planet, experiment, end_event)
-    print(rover_after)
-    print(f'rovers are different? {rover_after is not rover}')
+    print(rover_after['telemetry'])
 
 def test_rover_dynamics():
     rover = define_rovers.rover1()
@@ -90,9 +89,9 @@ def get_motor_effcy():
 if __name__ == '__main__':
     # test_1()
     # test_motorW()
-    # test_simulate_rover()
+    test_simulate_rover()
     # test_rover_dynamics()
-    test_batt_energy()
+    # test_batt_energy()
     # test_mech_power()
     # test_taudcmotor()
     # get_motor_effcy()
