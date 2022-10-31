@@ -1,3 +1,7 @@
+# allow imports from parent directory
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import subfunctions as sf
 import numpy as np
 import matplotlib.pyplot as plt

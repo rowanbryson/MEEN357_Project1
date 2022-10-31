@@ -1,3 +1,6 @@
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from subfunctions import *
 from define_experiment import *
 import numpy as np
@@ -58,4 +61,4 @@ def visualize(experiment, full=False):
 
 if __name__ == '__main__':
     experiment, end_event = experiment2()
-    visualize(experiment, full=True)
+    visualize(experiment)
