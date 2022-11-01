@@ -1,6 +1,6 @@
-completion_time,2842.9232426596177
-distance_traveled,1000.0
-max_velocity,0.3618225940258795
-average_velocity,0.35175061535058466
-battery_energy,997834.7475854815
-energy_per_distance,997.8347475854815
+completion_time [s],2842.9232
+distance_traveled [m],1000.0000
+max_velocity [m/s],0.3618
+average_velocity [m/s],0.3518
+battery_energy [J],9.98E+05
+energy_per_distance [J/m],997.8347

@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d
 from scipy.integrate import solve_ivp
 
-def angle_over_distance(experiment):
+def angle_over_distance(experiment, ax=None):
     '''Plots the angle of the terrain over time
     
     This is the on we will be graded on.
@@ -22,7 +22,8 @@ def angle_over_distance(experiment):
 
     #plot of terrain angle vs rover position
     xaxis = np.linspace(alpha_dist[0], alpha_dist[-1], 100)
-    fig, ax = plt.subplots()
+    if ax is None:
+        fig, ax = plt.subplots()
     ax.plot(xaxis, alpha_fun(xaxis), label="100 evaluated terrain angles")
     ax.plot(alpha_dist, alpha_deg, 'r*', label="define_experiment data")
     ax.legend()
@@ -31,7 +32,7 @@ def angle_over_distance(experiment):
     ax.set_ylabel("Terrain Angle (deg)")
     return ax
 
-def height_over_x_distance(experiment):
+def height_over_x_distance(experiment, ax=None):
     alpha_fun = interp1d(experiment['alpha_dist'], experiment['alpha_deg'], kind='cubic', fill_value='extrapolate')
     def terrain_derivatives(s, z):
         angle = alpha_fun(s)  # angle of terrain in degrees
@@ -43,22 +44,29 @@ def height_over_x_distance(experiment):
     origin = np.array([0, 0])
     sol = solve_ivp(terrain_derivatives, t_span, y0=origin, method='RK45', t_eval=np.linspace(t_span[0], t_span[1], 10000))
 
-    fig, ax = plt.subplots()
+    if ax is None:
+        fig, ax = plt.subplots()
     ax.plot(sol.y[0], sol.y[1])
     ax.set_title("Terrain Height vs x Distance")
     ax.set_xlabel("x Distance [m]")
     ax.set_ylabel("Terrain Height [m]")
+    ax.grid()
+    ax.set_aspect('equal', adjustable='box')
     return ax
 
 
-def visualize(experiment, full=False):
+def visualize(experiment, full=False, save_plot=False):
     ax = angle_over_distance(experiment)
     plt.sca(ax)
+    if save_plot:
+        plt.savefig('plots/phase_2/angle_over_distance.png')
     if full:
         ax = height_over_x_distance(experiment)
         plt.sca(ax)
-        plt.show()
+        if save_plot:
+            plt.savefig('plots/phase_2/height_over_x_distance.png')
+    plt.show()
 
 if __name__ == '__main__':
-    experiment, end_event = experiment2()
-    visualize(experiment)
+    experiment, end_event = experiment1()
+    visualize(experiment, full=True, save_plot=True)

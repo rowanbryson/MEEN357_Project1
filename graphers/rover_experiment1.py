@@ -35,6 +35,9 @@ def plot_data(telemetry, show_plots=True, save_plots=False, plot_terrain=False):
     ax3.set_ylabel('Power [W]')
     ax3.set_xlabel('Time [s]')
     fig1.suptitle('Rover Telemetry Graphs')
+    ax1.grid()
+    ax2.grid()
+    ax3.grid()
 
     # also plot the terrain information if specified
     if plot_terrain:
@@ -51,7 +54,6 @@ def plot_data(telemetry, show_plots=True, save_plots=False, plot_terrain=False):
 
 def save_telemetry_data(telemetry, filepath='plots/phase_2/telemetry_data.csv'):
     fields_to_save = ['completion_time', 'distance_traveled', 'max_velocity', 'average_velocity', 'battery_energy', 'energy_per_distance']
-    print(telemetry)
     # save a csv file with the telemetry data
     with open(filepath, 'w') as f:
         for field in fields_to_save:
@@ -59,5 +61,5 @@ def save_telemetry_data(telemetry, filepath='plots/phase_2/telemetry_data.csv'):
 
 if __name__ == '__main__':
     telemetry = get_telemetry_data()
-    plot_data(telemetry, plot_terrain=True, save_plots=True)
-    save_telemetry_data(telemetry)
+    plot_data(telemetry, show_plots=True, save_plots=True, plot_terrain=True)
+    # save_telemetry_data(telemetry)
