@@ -12,6 +12,13 @@ def angle_over_distance(experiment, ax=None):
     '''Plots the angle of the terrain over time
     
     This is the on we will be graded on.
+
+    Inputs:
+    -------
+    experiment : dict
+        The experiment dictionary
+    ax : matplotlib.axes.Axes, optional
+        The axes to plot on. If None, a new figure is created.
     '''
     #initalization of variables
     alpha_dist = experiment['alpha_dist']
@@ -33,6 +40,12 @@ def angle_over_distance(experiment, ax=None):
     return ax
 
 def height_over_x_distance(experiment, ax=None):
+    '''
+    Plots the height of the terrain with respect to the rover's position on the x axis
+
+    This one is not required, but it is a nice visualization of the terrain,
+    and it is helpful for deciding wether our output makes sense.
+    '''
     alpha_fun = interp1d(experiment['alpha_dist'], experiment['alpha_deg'], kind='cubic', fill_value='extrapolate')
     def terrain_derivatives(s, z):
         angle = alpha_fun(s)  # angle of terrain in degrees
@@ -56,6 +69,21 @@ def height_over_x_distance(experiment, ax=None):
 
 
 def visualize(experiment, full=False, save_plot=False):
+    '''
+    This function handles calling the plot functions. It allows the
+    plotting to be modular, which I needed because I wanted to be able to access
+    the terrain ploting function from the rover simulation in order to plot the
+    terrain right next to the telemetry data.
+
+    Inputs:
+    -------
+    experiment : dict
+        The experiment dictionary
+    full : bool, optional
+        If True, all plots are shown. If False, only the required plot (terrain angle) is shown.
+    save_plot : bool, optional
+        If True, the plot is saved to a file.
+    '''
     ax = angle_over_distance(experiment)
     plt.sca(ax)
     if save_plot:

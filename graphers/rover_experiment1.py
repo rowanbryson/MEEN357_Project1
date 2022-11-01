@@ -23,7 +23,20 @@ def get_telemetry_data():
     return rover['telemetry']
 
 def plot_data(telemetry, show_plots=True, save_plots=False, plot_terrain=False):
-    '''plot the telemetry data and show the plot'''
+    '''plot the telemetry data and show the plot
+    
+    Parameters
+    ----------
+    telemetry : dict
+        telemetry data from the rover
+    show_plots : bool, optional
+        whether to show the plots, by default True
+    save_plots : bool, optional
+        whether to save the plots, by default False
+    plot_terrain : bool, optional
+        whether to plot the terrain, by default False
+        ! this is useful for debugging, but not required for grading, so it is False by default
+    '''
     time = telemetry['time']
     fig1, (ax1, ax2, ax3) = plt.subplots(3, 1, sharex=True)
 
@@ -53,6 +66,15 @@ def plot_data(telemetry, show_plots=True, save_plots=False, plot_terrain=False):
 
 
 def save_telemetry_data(telemetry, filepath='plots/phase_2/telemetry_data.csv'):
+    '''save the telemetry data to a csv file
+
+    Parameters
+    ----------
+    telemetry : dict
+        telemetry data from the rover
+    filepath : str, optional
+        path to save the csv file, by default 'plots/phase_2/telemetry_data.csv'
+    '''
     fields_to_save = ['completion_time', 'distance_traveled', 'max_velocity', 'average_velocity', 'battery_energy', 'energy_per_distance']
     # save a csv file with the telemetry data
     with open(filepath, 'w') as f:

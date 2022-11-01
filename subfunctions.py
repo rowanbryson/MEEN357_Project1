@@ -560,41 +560,19 @@ def battenergy(t, v, rover, quick_plot=False):
     motor_effcy_func = interp1d(motor['effcy_tau'], motor['effcy'], kind='cubic', fill_value='extrapolate')
 
     # get the total mechanical power output by the motors at each velocity
-    mechanical_power_vals = 6 * mechpower(v, rover)
-
-    if quick_plot:
-        fig, ax = plt.subplots()
-        ax.plot(motor['effcy_tau'], motor['effcy'], label='Data')
-        interp_x = np.linspace(motor['effcy_tau'][0], motor['effcy_tau'][-1], 1000)
-        ax.plot(interp_x, motor_effcy_func(interp_x), label='Interpolation')
-        ax.set_title('Motor Efficiency vs. Mechanical Power')
-        ax.set_xlabel('Mechanical Power [W]')
-        ax.set_ylabel('Motor Efficiency')
-        ax.legend()
-        plt.show()
+    mechanical_power_array = 6 * mechpower(v, rover)
 
     # get the battery efficiency at each mechanical power value
     motor_effcy = motor_effcy_func(tau_dcmotor(motorW(v, rover), motor))
     # get the total electrical power consumed by the motors at each velocity
-    electrical_power = mechanical_power_vals / motor_effcy
+    electrical_power_array = mechanical_power_array / motor_effcy
 
     # integrate the electrical power to get the total electrical energy consumed
-    trapazoid_answer = cumulative_trapezoid(electrical_power, t)[-1] # trapanzoidal answer is closer to the value provided by prof
-    simpson_answer = simpson(electrical_power, t)
+    total_eletrical_power = simpson(electrical_power_array, t)
+    return total_eletrical_power
 
-    if quick_plot:
-        print(f'Trapazoid answer: {trapazoid_answer}')
-        print(f'Simpson answer: {simpson_answer}')
-        fig, ax = plt.subplots()
-        ax.scatter(t, electrical_power)
-        ax.set_title('Electrical Power vs. Time')
-        ax.set_xlabel('Time [s]')
-        ax.set_ylabel('Electrical Power [W]')
-        plt.show()
     
-    return simpson_answer
-
-def simulate_rover(rover: dict, planet: dict, experiment: dict, end_event: dict=None, quick_plot: bool=False, expand: bool=False) -> dict:
+def simulate_rover(rover: dict, planet: dict, experiment: dict, end_event: dict=None, expand: bool=False) -> dict:
     '''
     This function integrates the trajectory of a rover.
 
@@ -638,32 +616,37 @@ def simulate_rover(rover: dict, planet: dict, experiment: dict, end_event: dict=
             energy_per_distance: scalar
                 Total energy spent (from battery) per meter traveled [J/m]
     '''
-
+    # allow end_event to override experiment['end_event'] if it is provided
     if end_event is None:
         end_event = experiment['end_event']
 
     time_span = experiment['time_range']
     y0 = experiment['initial_conditions']
 
+    # functools.partial allows us to pass in arguments to the function that will be called by the integrator
+    # you can also use lambda functions, but this is more readable to me
     rover_dynamics_partial = partial(rover_dynamics, rover=rover, planet=planet, experiment=experiment)
     sol = solve_ivp(rover_dynamics_partial, time_span, y0, method='BDF', events=end_of_mission_event(end_event), dense_output=expand, rtol=1e-10, atol=1e-10)
     t = sol.t
     y = sol.y
 
+    # calculate and store telemetry data
     telemetry = {
         'time': t,
         'completion_time': t[-1],
         'velocity': y[0],
         'position': y[1],
-        'distance_traveled': y[1][-1] - y[1][0],
+        'distance_traveled': y[1][-1] - y[1][0],  # final position - initial position
         'max_velocity': np.max(y[0]),
-        'average_velocity': (y[1][-1] - y[1][0])/t[-1],
+        'average_velocity': (y[1][-1] - y[1][0])/t[-1],  # distance traveled / time elapsed
         'power': mechpower(y[0], rover),
         'battery_energy': battenergy(t, y[0], rover),
-        'energy_per_distance': battenergy(t, y[0], rover)/(y[1][-1] - y[1][0])
+        'energy_per_distance': battenergy(t, y[0], rover)/(y[1][-1] - y[1][0])  # total energy / distance traveled
     }
+    # allow the function caller to access the solution object if desired
     if expand:
         telemetry['sol'] = sol
+    # make a copy of the rover dictionary so we don't modify the original
     rover = rover.copy()
     rover['telemetry'] = telemetry
     return rover
