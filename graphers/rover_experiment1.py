@@ -83,5 +83,4 @@ def save_telemetry_data(telemetry, filepath='plots/phase_2/telemetry_data.csv'):
 
 if __name__ == '__main__':
     telemetry = get_telemetry_data()
-    plot_data(telemetry, show_plots=True, save_plots=True, plot_terrain=True)
-    # save_telemetry_data(telemetry)
+    plot_data(telemetry, show_plots=True)

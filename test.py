@@ -361,7 +361,7 @@ class TestMotorW(unittest.TestCase):
         with self.assertRaises(KeyError):
             motorW(v, rover)
 
-class Testrover_dynamics(unittest.TestCase):
+class TestRoverDynamics(unittest.TestCase):
     def setUp(self) -> None :
         self.default_rover = define_rovers.rover1()
         self.default_planet = define_rovers.planet1()
@@ -393,7 +393,8 @@ class Testrover_dynamics(unittest.TestCase):
         t = 'string'
         y = np.array([0, 0])
         with self.assertRaises(Exception):
-            rover_dynamics(t, y, self.default_rover, self.default_planet, self.default_experiment)
+            val = rover_dynamics(t, y, self.default_rover, self.default_planet, self.default_experiment)
+            print(val)
 
     def test_dict_exception(self):
         t = 10

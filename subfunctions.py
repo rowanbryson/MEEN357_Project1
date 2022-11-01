@@ -11,9 +11,10 @@ from tkinter.ttk import Style
 import numpy as np
 from scipy.interpolate import interp1d
 from functools import partial
-from scipy.integrate import solve_ivp, simpson, cumulative_trapezoid
+from scipy.integrate import solve_ivp, simpson
 from matplotlib import pyplot as plt
 from typing import Union
+import numbers
 
 def get_mass(rover):
     """
@@ -377,14 +378,10 @@ def motorW(v, rover):
     '''
 
     # check that the velocity argument is a scalar or numpy array
-    if (type(v) != int) and (type(v) != float) and (np.ScalarType) and (not isinstance(v, np.ndarray)):
-        raise TypeError('1st argument \'v\' must be a scalar or a numpy array')
-    # make v a numpy array if it's a scalar
-    # if not isinstance(v, np.ndarray):
-    #     v = np.array([v])
-    # check that the vector is 1D
-    if isinstance(v, np.ndarray) and len(np.shape(v)) != 1:
-        raise TypeError(f'1st argument \'v\' must be a scalar or a vector, not {type(v)} Matricies are not allowed. np.shape(v) = {np.shape(v)}')
+    if not isinstance(v, (np.ndarray, numbers.Number)):
+        raise TypeError('1st argument (v) must be a scalar or a numpy array')
+    if isinstance(v, np.ndarray) and v.ndim != 1:
+        raise TypeError(f'1st argument (v) must be a scalar or a vector, not {type(v)} Matricies are not allowed. v.ndim == {np.shape(v)}')
 
     try:
         gear_ratio = get_gear_ratio(rover['wheel_assembly']['speed_reducer'])  # ratio of gearbox input shaft speed to output shaft speed
@@ -425,18 +422,17 @@ def rover_dynamics(t, y, rover, planet, experiment):
         First element is rover acceleration [m/s^2] and second is rover velocity [m/s]  
     '''
     # check that t is a scalar
-    if (type(t) != int) and (type(t) != float) and (not isinstance(t, np.ScalarType)):
-        raise Exception (f"argument one must be a scalar, not {type(t)}")
-
+    if not isinstance(t, numbers.Number):
+        raise Exception (f"1st argument (t) must be a scalar, not {type(t)}")
     # check that y is a np array
     if not isinstance(y, np.ndarray):
-        raise Exception(f"argument two must be a numpy array, not {type(y)}")
+        raise Exception(f"2nd argument (y) must be a numpy array, not {type(y)}")
     # check that the vector is 1D
-    if len(np.shape(y)) != 1:
-        raise TypeError('2nd argument \'y\' must be a vector. Matricies are not allowed.')
+    if y.ndim != 1:
+        raise TypeError('2nd argument (y) must be a vector. Matricies are not allowed.')
     #check that y only has two elements
     if len(y) != 2:
-        raise Exception("y must only contain two elements, acceleration and velocity")
+        raise Exception("2nd argument (y) must only contain two elements, acceleration and velocity")
 
     # check that rover, planet, and experiment are dicitonaries 
     if (type(rover) != dict) or (type(planet) != dict) or (type(experiment) != dict):
@@ -462,7 +458,7 @@ def rover_dynamics(t, y, rover, planet, experiment):
     
     return dydt
 
-def mechpower(v, rover, quick_plot=False):
+def mechpower(v, rover):
     '''
     Computes the instantaneous mechanical power output by a single DC motor at each point in a given velocity profile
 
@@ -480,64 +476,30 @@ def mechpower(v, rover, quick_plot=False):
         Return argument should be the same size as v
     '''
     #check if v is scalar or vector
-    if (type(v) != int) and (type(v) != float) and (not isinstance(v, np.ndarray)) and (not isinstance(v, np.ScalarType)):
+    if not isinstance(v, (np.ndarray, numbers.Number)):
         raise TypeError(f"1st argument must be a scalar or vector, not {type(v)}")
-    
     #check if rover is dict
     if (type(rover) != dict):
         raise TypeError("2nd argument must be a dictionary")
-        
+    
+    # record the input type so we can return the same type
     INPUT_TYPE = type(v)
+    # make v a numpy array if it's a scalar
     if not isinstance(v, np.ndarray):
         v = np.array([v])
 
     torque = tau_dcmotor(motorW(v, rover), rover['wheel_assembly']['motor'])
     w = motorW(v, rover)
     power = torque * w
-
-    # if (type(v) == int) or (type(v) == float) or isinstance(v, np.ScalarType):
-        
-    #     #find power if given single scalar
-    #     k = 0
-    #     p = torque[k]*w[k]
-        
-    # else:
-        
-    #     # check that the vector is 1D
-    #     if len(np.shape(v)) != 1:
-    #         raise TypeError('1st argument \'v\' must be a vector. Matricies are not allowed.')   
-        
-    #     # power = torque * omega
-    #     p = np.zeros(len(v), dtype=float)
-
-    #     #find power for each velocity given
-    #     for k in range(len(v)):
-    #         p[k] = torque[k] * w[k]
-            
+    
+    # if the input was a scalar, return a scalar
     if not INPUT_TYPE == np.ndarray:
         power = power[0]
-
-    if quick_plot:
-        fig, ax = plt.subplots(4, 1)
-        ax[0].plot(v, torque)
-        ax[0].set_xlabel('Velocity [m/s]')
-        ax[0].set_ylabel('Torque [Nm]')
-        ax[1].plot(w, torque)
-        ax[1].set_xlabel('Motor Speed [rad/s]')
-        ax[1].set_ylabel('Torque [Nm]')
-        ax[2].plot(v, w)
-        ax[2].set_xlabel('Velocity [m/s]')
-        ax[2].set_ylabel('Motor Speed [rad/s]')
-        ax[3].plot(v, power)
-        ax[3].set_xlabel('Velocity [m/s]')
-        ax[3].set_ylabel('Power [W]')
-        fig.tight_layout()
-        plt.show()
 
     return power
 
 
-def battenergy(t, v, rover, quick_plot=False): 
+def battenergy(t, v, rover): 
     """
     This function computes the total electrical energy consumed from the rover battery pack over a simulation profile, 
     defined as time-velocity pairs. This function assumes all 6 motors are driven from the same battery pack (i.e., this 
@@ -555,6 +517,22 @@ def battenergy(t, v, rover, quick_plot=False):
     E: scalar
         Total electrical energy consumed from the battery pack [J]
     """
+    #check if t is a vector
+    if not isinstance(t, np.ndarray):
+        raise TypeError(f"1st argument (t) must be a vector, not {type(t)}")
+    # check that the vector is 1D
+    if t.ndim != 1:
+        raise TypeError('1st argument \'t\' must be a vector. Matricies are not allowed.')
+    #check if v is a vector
+    if not isinstance(v, np.ndarray):
+        raise TypeError(f"2nd argument (v) must be a vector, not {type(v)}")
+    # check that the vector is 1D
+    if v.ndim != 1:
+        raise TypeError('2nd argument \'v\' must be a vector. Matricies are not allowed.')
+    #check if rover is a dict
+    if not isinstance(rover, dict):
+        raise TypeError(f"3rd argument (rover) must be a dictionary, not {type(rover)}")
+
     # get an interpolated function for the battery efficiency
     motor = rover['wheel_assembly']['motor']
     motor_effcy_func = interp1d(motor['effcy_tau'], motor['effcy'], kind='cubic', fill_value='extrapolate')
@@ -571,7 +549,7 @@ def battenergy(t, v, rover, quick_plot=False):
     total_eletrical_power = simpson(electrical_power_array, t)
     return total_eletrical_power
 
-    
+
 def simulate_rover(rover: dict, planet: dict, experiment: dict, end_event: dict=None, expand: bool=False) -> dict:
     '''
     This function integrates the trajectory of a rover.
@@ -616,6 +594,18 @@ def simulate_rover(rover: dict, planet: dict, experiment: dict, end_event: dict=
             energy_per_distance: scalar
                 Total energy spent (from battery) per meter traveled [J/m]
     '''
+    # check if rover is dict
+    if not isinstance(rover, dict):
+        raise TypeError(f"1st argument (rover) must be a dictionary, not {type(rover)}")
+    if not isinstance(planet, dict):
+        raise TypeError(f"2nd argument (planet) must be a dictionary, not {type(planet)}")
+    if not isinstance(experiment, dict):
+        raise TypeError(f"3rd argument (experiment) must be a dictionary, not {type(experiment)}")
+    if (end_event is not None) and (not isinstance(end_event, dict)):
+        raise TypeError(f"optional kwarg end_event must be a dictionary, not {type(end_event)}")
+    if not isinstance(expand, bool):
+        raise TypeError(f"optional kwarg expand must be a boolean, not {type(expand)}")
+
     # allow end_event to override experiment['end_event'] if it is provided
     if end_event is None:
         end_event = experiment['end_event']
