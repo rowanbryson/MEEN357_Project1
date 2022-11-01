@@ -425,7 +425,7 @@ def rover_dynamics(t, y, rover, planet, experiment):
         First element is rover acceleration [m/s^2] and second is rover velocity [m/s]  
     '''
     # check that t is a scalar
-    if (type(t) != int) and (type(t) != float) and (not isinstance(t, np.ScalarType)):
+    if (type(t) != int) and (type(t) != float) and (isinstance(t, np.ScalarType)):
         raise Exception (f"argument one must be a scalar, not {type(t)}")
 
     # check that y is a np array

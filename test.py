@@ -1,5 +1,7 @@
+from re import L
 from subfunctions import *
 import define_rovers
+import define_experiment
 import unittest
 import copy
 
@@ -358,6 +360,59 @@ class TestMotorW(unittest.TestCase):
         del rover['wheel_assembly']['speed_reducer']
         with self.assertRaises(KeyError):
             motorW(v, rover)
+
+class Testrover_dynamics(unittest.TestCase):
+    def setUp(self) -> None :
+        self.default_rover = define_rovers.rover1()
+        self.default_planet = define_rovers.planet1()
+        self.default_experiment, self.default_endevent = define_experiment.experiment1()
+        self.default_experiment2, self.default_endevent2 = define_experiment.experiment2()
+
+    def test_from_slide1(self):
+        t = 0
+        y = np.array([.33, 0])
+        expected = np.array([.253, .33])
+        actual = rover_dynamics(t, y, self.default_rover, self.default_planet, self.default_experiment)
+        self.assertTrue(np.allclose(actual, expected, atol=1e-2))
+
+    def test_from_slide2(self):
+        t = 20
+        y = np.array([.25, 500])
+        expected = np.array([2.86, .25])
+        actual = rover_dynamics(t, y, self.default_rover, self.default_planet, self.default_experiment)
+        self.assertTrue(np.allclose(actual, expected, atol= 1e-2))
+
+    def test_float(self):
+        t = 20.0
+        y = np.array([.25, 500.0])
+        expected = np.array([2.86, .25])
+        actual = rover_dynamics(t, y, self.default_rover, self.default_planet, self.default_experiment)
+        self.assertTrue(np.allclose(actual, expected, atol = 1e-2))
+
+    def test_string_exception(self):
+        t = 'string'
+        y = np.array([0, 0])
+        with self.assertRaises(Exception):
+            rover_dynamics(t, y, self.default_rover, self.default_planet, self.default_experiment)
+
+    def test_dict_exception(self):
+        t = 10
+        y = np.array([10, 11])
+        rover_test = 10
+        with self.assertRaises(Exception):
+            rover_dynamics(t, y, rover_test, self.default_planet, self.default_experiment)
+
+    def test_array_exception(self):
+        t = 10
+        y = 10
+        with self.assertRaises(Exception):
+            rover_dynamics(t, y, self.default_rover, self.default_planet, self.default_experiment)
+
+    def test_y_size(self):
+        t = 10
+        y = np.array([1, 2, 3])
+        with self.assertRaises(Exception):
+            rover_dynamics(t, y, self.default_rover, self.default_planet, self.default_experiment)
 
 
 class TestMechPower(unittest.TestCase):
