@@ -27,8 +27,27 @@ def get_specific_sim_runner(edl_system1, mars, mission_events, tmax, verbose):
     def sim_runner(parachute_diameter):
         edl_system2 = setup_edl(edl_system1)
         edl_system2['parachute']['diameter'] = parachute_diameter
-        [t, Y, edl_system, end_info] = simulate_edl(edl_system2, mars, mission_events, tmax, verbose)
-        return end_info
+        [T, Y, edl_system] = simulate_edl(edl_system2, mars, mission_events, tmax, verbose)
+
+        end_time = T[-1]
+        end_velocity = Y[0, -1]
+        end_altitude = Y[1, -1]
+        end_rover_rel_velocity = Y[5, -1]
+        end_rover_rel_position = Y[6, -1]
+        end_rover_position = end_altitude + end_rover_rel_position
+        end_rover_velocity = end_velocity + end_rover_rel_velocity
+
+        success = True
+        # check if end_rover_position is within 1 m of the ground
+        if abs(end_rover_position) > 1:
+            success = False
+        if end_altitude <= edl_system["sky_crane"]["danger_altitude"]:
+            success = False
+        if abs(end_rover_velocity) >= abs(edl_system["sky_crane"]["danger_speed"]):
+            success = False
+        
+        return {'end_time': end_time, 'rover_end_speed': end_rover_velocity, 'success': success}
+
     return sim_runner
 
 def main(show=True, save=False, verbose=False):
