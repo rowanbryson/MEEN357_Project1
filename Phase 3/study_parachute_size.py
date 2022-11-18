@@ -45,7 +45,6 @@ def get_specific_sim_runner(edl_system1, mars, mission_events, tmax, verbose):
             success = False
         if abs(end_rover_velocity) >= abs(edl_system["sky_crane"]["danger_speed"]):
             success = False
-        
         return {'end_time': end_time, 'rover_end_speed': end_rover_velocity, 'success': success}
 
     return sim_runner
@@ -105,4 +104,4 @@ def main(show=True, save=False, verbose=False):
         plt.show()
 
 if __name__ == '__main__':
-    main(save=False)
+    main(save=True)

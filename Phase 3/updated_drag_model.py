@@ -2,25 +2,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 from subfunctions_EDL import *
 import scipy.interpolate as sp
+import subfunctions_EDL as subEDL
+import functools as ft
 
 # Drag Coefficient Modifier Function
 
-def DCM(v, alt, Cd, plot = True):
-    """
-    This function calculates the Mach efficiency factor for a given velocity and altitude using interpolated data from the documentation.
-    It returns the modified drag coefficient using the Mach efficiency factor.
-    
-    Inputs:
-        v: velocity in m/s
-        alt: altitude in m
-        Cd: drag coefficient
-        plot: boolean, if true, plots the drag coefficient modifier
-    
-    Outputs:
-        Cd: modified drag coefficient
-    
-    """
-    
+def __get_coefficients_for_drag_model():
     mach_exp = np.array([0.25,0.5,0.65,0.7,0.8,0.9,0.95,1,1.1,1.2,1.3,1.4,1.5,1.6,1.8,1.9,2,2.2,2.5,2.6])
     MEF_exp = np.array([1,1,1,0.98,0.9,0.72,0.66,0.76,0.9,0.96,0.99,0.999,0.992,0.98,0.9,0.85,0.82,0.75,0.65,0.62])
 
@@ -46,22 +33,53 @@ def DCM(v, alt, Cd, plot = True):
     # solve for the coefficients of the piecewise linear function
     c = np.linalg.solve(a, b)
 
-    # solve for the MEF at the given mach number
-    MEF = 0
-    mach = v2M_Mars(v, alt)
-    for i in range(nsegs):
-        if mach_exp[i] <= mach and mach <= mach_exp[i+1]:
-            MEF = c[2*i]*mach + c[2*i+1]
-            break
+    return c
 
-    Cdmod = Cd * float(MEF)
-
-    # plot the piecewise linear function
-    mach_test = np.linspace(0.25, 2.6, 10000)
+def __full_get_MEF(v, alt, c, plot = False):
+    """
+    This function calculates the Mach efficiency factor for a given velocity and altitude using interpolated data from the documentation.
+    It returns the Mach efficiency factor.
+    
+    Inputs:
+        v: velocity in m/s
+        alt: altitude in m
+        plot: boolean, if true, plots the drag coefficient modifier
+    
+    Outputs:
+        MEF: Mach efficiency factor
+    
+    """
+    
     mach_exp = np.array([0.25,0.5,0.65,0.7,0.8,0.9,0.95,1,1.1,1.2,1.3,1.4,1.5,1.6,1.8,1.9,2,2.2,2.5,2.6])
     MEF_exp = np.array([1,1,1,0.98,0.9,0.72,0.66,0.76,0.9,0.96,0.99,0.999,0.992,0.98,0.9,0.85,0.82,0.75,0.65,0.62])
 
+    nsegs = np.size(mach_exp, 0) - 1
+
+    # convert mach_exp and MEF_exp to column vectors
+    mach_exp = mach_exp.reshape((len(mach_exp),1))
+    MEF_exp = MEF_exp.reshape((len(MEF_exp),1))
+
+    # solve for the MEF at the given mach number
+    MEF = 0
+    mach = subEDL.v2M_Mars(v, alt)
+    i = np.where(mach_exp > mach)[0][0] - 1
+    MEF = c[2*i]*mach + c[2*i+1]
+
+
+    # calculate the MEF at the given mach number from the coefficients more efficiently
+    # find the first index where mach_exp is greater than mach
+
+
+
+
+    
+
     if plot:
+        # plot the piecewise linear function
+        mach_test = np.linspace(0.25, 2.6, 10000)
+        mach_exp = np.array([0.25,0.5,0.65,0.7,0.8,0.9,0.95,1,1.1,1.2,1.3,1.4,1.5,1.6,1.8,1.9,2,2.2,2.5,2.6])
+        MEF_exp = np.array([1,1,1,0.98,0.9,0.72,0.66,0.76,0.9,0.96,0.99,0.999,0.992,0.98,0.9,0.85,0.82,0.75,0.65,0.62])
+
         MEF_test = np.zeros((len(mach_test), 1))
         for i in range(nsegs):
             for j in range(len(mach_test)):
@@ -131,13 +149,18 @@ def DCM(v, alt, Cd, plot = True):
     # plt.savefig('RelError.png')
     # plt.show()
 
-    return Cdmod
+    return float(MEF)
 
+c = __get_coefficients_for_drag_model()
+__get_MEF = ft.partial(__full_get_MEF, c=c)
 
-# Main Function
-
-def main():
-    print(DCM(400, 0, 2, plot = True))
+def get_MEF(v, alt, plot=False):
+    return __get_MEF(v, alt, plot=plot)
 
 if __name__ == '__main__':
-    main()
+
+    print('starting')
+
+    MEF = get_MEF(400, 0)
+    print(MEF)
+

@@ -10,7 +10,7 @@ from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
 from scipy.interpolate import PchipInterpolator as pchip
 from scipy.integrate import solve_ivp
-
+import updated_drag_model
 
 def get_mass_rover(edl_system):
 
@@ -96,6 +96,8 @@ def F_drag_descent(edl_system,planet,altitude,velocity):
     # bit is area*Cd, which we'll figure out below.
     rhov2=0.5*density*velocity**2
     
+    # compute the Mach efficiency factor
+    MEF = updated_drag_model.get_MEF(velocity, altitude)
     
     # *************************************
     # Determine which part(s) of the EDL system are contributing to drag
@@ -103,15 +105,15 @@ def F_drag_descent(edl_system,planet,altitude,velocity):
     # If the heat shield has not been ejected, use that as our drag
     # contributor. Otherwise, use the sky crane.
     if not edl_system['heat_shield']['ejected']:
-        ACd_body = np.pi*(edl_system['heat_shield']['diameter']/2.0)**2*edl_system['heat_shield']['Cd']
+        ACd_body = np.pi*(edl_system['heat_shield']['diameter']/2.0)**2*edl_system['heat_shield']['Cd'] * MEF
     else:
-        ACd_body = edl_system['sky_crane']['area']*edl_system['sky_crane']['Cd']
+        ACd_body = edl_system['sky_crane']['area']*edl_system['sky_crane']['Cd'] * MEF
 
     
     # if the parachute is in the deployed state, need to account for its area
     # in the drag calculation
     if edl_system['parachute']['deployed'] and not edl_system['parachute']['ejected']:
-        ACd_parachute = np.pi*(edl_system['parachute']['diameter']/2.0)**2*edl_system['parachute']['Cd']
+        ACd_parachute = np.pi*(edl_system['parachute']['diameter']/2.0)**2*edl_system['parachute']['Cd'] * MEF
     else:
         ACd_parachute = 0.0
     
