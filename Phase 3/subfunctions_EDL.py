@@ -97,7 +97,8 @@ def F_drag_descent(edl_system,planet,altitude,velocity):
     rhov2=0.5*density*velocity**2
     
     # compute the Mach efficiency factor
-    MEF = updated_drag_model.get_MEF(velocity, altitude)
+    # MEF = updated_drag_model.get_MEF(velocity, altitude)
+    MEF = 1  # this is so I can run the code without the updated_drag_model
     
     # *************************************
     # Determine which part(s) of the EDL system are contributing to drag

@@ -117,8 +117,10 @@ def main(show=True, save=False, verbose=False):
     ax[0].plot(parachute_diameters, end_times)
     ax[0].set_title('Simulated time [s]')
     ax[0].set_ylabel('Time [s]')
+    ax[0].set_xlabel('Parachute diameter [m]')
     ax[1].plot(parachute_diameters, end_speeds)
     ax[1].set_title('Ending rover speed [m/s]')
+    ax[1].set_xlabel('Parachute diameter [m]')
     ax[1].set_ylabel('Speed [m/s]')
 
     # make a thin line to show the successes
