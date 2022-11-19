@@ -158,9 +158,6 @@ def get_MEF(v, alt, plot=False):
     return __get_MEF(v, alt, plot=plot)
 
 if __name__ == '__main__':
-
-    print('starting')
-
     MEF = get_MEF(400, 0)
     print(MEF)
 

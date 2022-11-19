@@ -146,4 +146,4 @@ def main(show=True, save=False, verbose=False):
         plt.show()
 
 if __name__ == '__main__':
-    main(save=True)
+    main(save=False)
