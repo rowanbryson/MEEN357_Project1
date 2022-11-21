@@ -12,6 +12,7 @@ import numpy as np
 from scipy.interpolate import interp1d
 from functools import partial
 from scipy.integrate import solve_ivp, simpson
+import scipy
 from matplotlib import pyplot as plt
 from typing import Union
 import numbers
@@ -127,42 +128,42 @@ def F_rolling(omega, terrain_angle, rover, planet, Crr):
     """
     
     # Check that the first input is a scalar or a vector
-    if (type(omega) != int) and (type(omega) != float) and (not isinstance(omega, np.ndarray)):
-        raise Exception('First input must be a scalar or a vector. If input is a vector, it should be defined as a numpy array.')
-    elif not isinstance(omega, np.ndarray):
-        omega = np.array([omega],dtype=float) # make the scalar a numpy array
-    elif len(np.shape(omega)) != 1:
-        raise Exception('First input must be a scalar or a vector. Matrices are not allowed.')
+    # if (type(omega) != int) and (type(omega) != float) and (not isinstance(omega, np.ndarray)):
+    #     raise Exception('First input must be a scalar or a vector. If input is a vector, it should be defined as a numpy array.')
+    # elif not isinstance(omega, np.ndarray):
+    #     omega = np.array([omega],dtype=float) # make the scalar a numpy array
+    # elif len(np.shape(omega)) != 1:
+    #     raise Exception('First input must be a scalar or a vector. Matrices are not allowed.')
         
-    # Check that the second input is a scalar or a vector
-    if (type(terrain_angle) != int) and (type(terrain_angle) != float) and (not isinstance(terrain_angle, np.ndarray)):
-        raise Exception('Second input must be a scalar or a vector. If input is a vector, it should be defined as a numpy array.')
-    elif not isinstance(terrain_angle, np.ndarray):
-        terrain_angle = np.array([terrain_angle],dtype=float) # make the scalar a numpy array
-    elif len(np.shape(terrain_angle)) != 1:
-        raise Exception('Second input must be a scalar or a vector. Matrices are not allowed.')
+    # # Check that the second input is a scalar or a vector
+    # if (type(terrain_angle) != int) and (type(terrain_angle) != float) and (not isinstance(terrain_angle, np.ndarray)):
+    #     raise Exception('Second input must be a scalar or a vector. If input is a vector, it should be defined as a numpy array.')
+    # elif not isinstance(terrain_angle, np.ndarray):
+    #     terrain_angle = np.array([terrain_angle],dtype=float) # make the scalar a numpy array
+    # elif len(np.shape(terrain_angle)) != 1:
+    #     raise Exception('Second input must be a scalar or a vector. Matrices are not allowed.')
         
-    # Check that the first two inputs are of the same size
-    if len(omega) != len(terrain_angle):
-        raise Exception('First two inputs must be the same size')
+    # # Check that the first two inputs are of the same size
+    # if len(omega) != len(terrain_angle):
+    #     raise Exception('First two inputs must be the same size')
     
-    # Check that values of the second input are within the feasible range  
-    if max([abs(x) for x in terrain_angle]) > 75:    
-        raise Exception('All elements of the second input must be between -75 degrees and +75 degrees')
+    # # Check that values of the second input are within the feasible range  
+    # if max([abs(x) for x in terrain_angle]) > 75:    
+    #     raise Exception('All elements of the second input must be between -75 degrees and +75 degrees')
         
-    # Check that the third input is a dict
-    if type(rover) != dict:
-        raise Exception('Third input must be a dict')
+    # # Check that the third input is a dict
+    # if type(rover) != dict:
+    #     raise Exception('Third input must be a dict')
         
-    # Check that the fourth input is a dict
-    if type(planet) != dict:
-        raise Exception('Fourth input must be a dict')
+    # # Check that the fourth input is a dict
+    # if type(planet) != dict:
+    #     raise Exception('Fourth input must be a dict')
         
-    # Check that the fifth input is a scalar and positive
-    if (type(Crr) != int) and (type(Crr) != float):
-        raise Exception('Fifth input must be a scalar')
-    if Crr <= 0:
-        raise Exception('Fifth input must be a positive number')
+    # # Check that the fifth input is a scalar and positive
+    # if (type(Crr) != int) and (type(Crr) != float):
+    #     raise Exception('Fifth input must be a scalar')
+    # if Crr <= 0:
+    #     raise Exception('Fifth input must be a positive number')
         
     # Main Code
     m = get_mass(rover)
@@ -172,10 +173,12 @@ def F_rolling(omega, terrain_angle, rover, planet, Crr):
     
     v_rover = r*omega/Ng
     
-    Fn = np.array([m*g*math.cos(math.radians(x)) for x in terrain_angle],dtype=float) # normal force
+    # Fn = np.array([m*g*math.cos(math.radians(x)) for x in terrain_angle],dtype=float) # normal force
+    Fn = m*g*np.cos(np.radians(terrain_angle)) # normal force
     Frr_simple = -Crr*Fn # simple rolling resistance
     
-    Frr = np.array([math.erf(40*v_rover[ii]) * Frr_simple[ii] for ii in range(len(v_rover))], dtype = float)
+    # Frr = np.array([math.erf(40*v_rover[ii]) * Frr_simple[ii] for ii in range(len(v_rover))], dtype = float)
+    Frr = scipy.special.erf(40*v_rover) * Frr_simple
     
     return Frr
 
@@ -616,7 +619,7 @@ def simulate_rover(rover: dict, planet: dict, experiment: dict, end_event: dict=
     # functools.partial allows us to pass in arguments to the function that will be called by the integrator
     # you can also use lambda functions, but this is more readable to me
     rover_dynamics_partial = partial(rover_dynamics, rover=rover, planet=planet, experiment=experiment)
-    sol = solve_ivp(rover_dynamics_partial, time_span, y0, method='BDF', events=end_of_mission_event(end_event), dense_output=expand, rtol=1e-10, atol=1e-10)
+    sol = solve_ivp(rover_dynamics_partial, time_span, y0, method='BDF', events=end_of_mission_event(end_event), dense_output=expand)
     t = sol.t
     y = sol.y
 

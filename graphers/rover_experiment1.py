@@ -82,5 +82,6 @@ def save_telemetry_data(telemetry, filepath='plots/phase_2/telemetry_data.csv'):
             f.write(f'{field},{telemetry[field]}\n')
 
 if __name__ == '__main__':
+
     telemetry = get_telemetry_data()
     plot_data(telemetry, show_plots=True)
