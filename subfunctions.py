@@ -6,14 +6,10 @@
 ###########################################################################"""
 
 import math
-from tkinter import N
-from tkinter.ttk import Style
 import numpy as np
 from scipy.interpolate import interp1d
 from functools import partial
 from scipy.integrate import solve_ivp, simpson
-from matplotlib import pyplot as plt
-from typing import Union
 import numbers
 
 def get_mass(rover):
@@ -393,7 +389,7 @@ def motorW(v, rover):
 
     return motor_w
 
-def rover_dynamics(t, y, rover, planet, experiment):
+def rover_dynamics(t, y, rover, planet, experiment, alpha_fun: interp1d=None):
     '''
     Compute the derivative of the [velocity, position] vector for the rover given it's current state
 
@@ -439,7 +435,8 @@ def rover_dynamics(t, y, rover, planet, experiment):
         raise Exception("Third, fourth and fifth arguments must be dictionaries")
         
     # define alpha_fun
-    alpha_fun = interp1d(experiment['alpha_dist'], experiment['alpha_deg'], kind = 'cubic', fill_value = 'extrapolate') 
+    if alpha_fun is None:
+        alpha_fun = interp1d(experiment['alpha_dist'], experiment['alpha_deg'], kind = 'cubic', fill_value = 'extrapolate') 
     
     dydt = np.zeros(len(y), dtype=float)
     
@@ -550,7 +547,7 @@ def battenergy(t, v, rover):
     return total_eletrical_power
 
 
-def simulate_rover(rover: dict, planet: dict, experiment: dict, end_event: dict=None, expand: bool=False) -> dict:
+def simulate_rover(rover: dict, planet: dict, experiment: dict, end_event: dict=None, alpha_fun:interp1d = None, expand: bool=False) -> dict:
     '''
     This function integrates the trajectory of a rover.
 
@@ -615,7 +612,7 @@ def simulate_rover(rover: dict, planet: dict, experiment: dict, end_event: dict=
 
     # functools.partial allows us to pass in arguments to the function that will be called by the integrator
     # you can also use lambda functions, but this is more readable to me
-    rover_dynamics_partial = partial(rover_dynamics, rover=rover, planet=planet, experiment=experiment)
+    rover_dynamics_partial = partial(rover_dynamics, rover=rover, planet=planet, experiment=experiment, alpha_fun=alpha_fun)
     sol = solve_ivp(rover_dynamics_partial, time_span, y0, method='BDF', events=end_of_mission_event(end_event), dense_output=expand, rtol=1e-10, atol=1e-10)
     t = sol.t
     y = sol.y
@@ -636,7 +633,4 @@ def simulate_rover(rover: dict, planet: dict, experiment: dict, end_event: dict=
     # allow the function caller to access the solution object if desired
     if expand:
         telemetry['sol'] = sol
-    # make a copy of the rover dictionary so we don't modify the original
-    rover = rover.copy()
-    rover['telemetry'] = telemetry
     return rover

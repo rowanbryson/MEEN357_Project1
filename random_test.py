@@ -86,12 +86,23 @@ def get_motor_effcy():
     motor_effcy_interp = interp1d(motor['effcy_tau'], motor['effcy'], kind='cubic')
     print(motor_effcy_interp(v))
 
+def run_simulations():
+    rover = define_rovers.rover1()
+    planet = define_rovers.planet1()
+    experiment, end_event = define_experiment.experiment2()
+    alpha_fun = interp1d(experiment['alpha_dist'], experiment['alpha_deg'], kind = 'cubic', fill_value = 'extrapolate') 
+    for _ in range(10):
+        rover = simulate_rover(rover, planet, experiment, end_event, alpha_fun=alpha_fun)
+        rover = define_rovers.rover1()
+    
+
 if __name__ == '__main__':
     # test_1()
     # test_motorW()
-    test_simulate_rover()
+    # test_simulate_rover()
     # test_rover_dynamics()
     # test_batt_energy()
     # test_mech_power()
     # test_taudcmotor()
     # get_motor_effcy()
+    run_simulations()
