@@ -21,9 +21,10 @@ INTEGER_OPTIONS = def_opt.define_integer_options()
 CATEGORY_OPTIONS = def_opt.define_category_options()
 CONSTRAINTS = def_opt.define_constraints()
 
-# def init_empty_design_file():
-#     with open('Phase 4/top_10_designs.json', 'w') as f:
-#         json.dump([], f)
+def init_empty_design_file():
+    with open('Phase 4/top_10_designs.json', 'w') as f:
+        json.dump([], f)
+
 
 def submit_design_candidate(nums, design, time, filepath):
     """
@@ -62,59 +63,84 @@ def submit_design_candidate(nums, design, time, filepath):
         json.dump(data, f, indent=4)
 
 
-def run_optimizer():
-    experiment, end_event = def_ex.experiment1()
+def run_optimizer(popsize, maxiter):
+    experiment_holder = samp_tools.ExperimentHolder()
 
     # use scipy differential evolution
     bounds = opt.Bounds([0] * 9, [1] * 9)
-    evaluator = sim_tools.simplified_evaluator_factory(experiment, end_event,CONTINUOUS_OPTIONS, INTEGER_OPTIONS, CATEGORY_OPTIONS, CONSTRAINTS, 1000, False)
+    # evaluator = sim_tools.simplified_evaluator_factory(
+    #     experiment, end_event, CONTINUOUS_OPTIONS, INTEGER_OPTIONS, CATEGORY_OPTIONS, CONSTRAINTS, 1000, False)
+    evaluator = sim_tools.multi_terrain_evaluator_factory(experiment_holder, CONTINUOUS_OPTIONS, INTEGER_OPTIONS, CATEGORY_OPTIONS, CONSTRAINTS, 1000, False) 
 
-    design_generator = samp_tools.design_generator(CONTINUOUS_OPTIONS, INTEGER_OPTIONS, CATEGORY_OPTIONS, CONSTRAINTS)
+    design_generator = samp_tools.design_generator(
+        CONTINUOUS_OPTIONS, INTEGER_OPTIONS, CATEGORY_OPTIONS, CONSTRAINTS)
     x0, design = next(design_generator)
 
-
     # set up initial population
-    popsize = 100
-    designer = samp_tools.design_generator(CONTINUOUS_OPTIONS, INTEGER_OPTIONS, CATEGORY_OPTIONS, CONSTRAINTS)
-    initial_design_nums = np.vstack([next(designer)[0] for i in range(popsize)])
+    designer = samp_tools.design_generator(
+        CONTINUOUS_OPTIONS, INTEGER_OPTIONS, CATEGORY_OPTIONS, CONSTRAINTS)
+    initial_design_nums = np.vstack(
+        [next(designer)[0] for i in range(popsize)])
 
     def callback(xk, convergence):
-        design = samp_tools.nums_to_design(xk, CONTINUOUS_OPTIONS, INTEGER_OPTIONS, CATEGORY_OPTIONS)
+        experiment_holder.update_experiments(5)
+        design = samp_tools.nums_to_design(
+            xk, CONTINUOUS_OPTIONS, INTEGER_OPTIONS, CATEGORY_OPTIONS)
         print('design:', design)
         print('convergence:', convergence)
         print()
 
     print('[green]Starting Optimizer...[/]')
-    result = opt.differential_evolution(evaluator, bounds, maxiter=100, popsize=popsize, tol=0.01, polish=False, disp=True, init=initial_design_nums, callback=callback)
+    result = opt.differential_evolution(evaluator, bounds, maxiter=maxiter, popsize=popsize,
+                                        tol=0.01, polish=False, disp=True, init=initial_design_nums, callback=callback)
 
     design_nums = result.x
-    design = samp_tools.nums_to_design(design_nums, CONTINUOUS_OPTIONS, INTEGER_OPTIONS, CATEGORY_OPTIONS)
+    design = samp_tools.nums_to_design(
+        design_nums, CONTINUOUS_OPTIONS, INTEGER_OPTIONS, CATEGORY_OPTIONS)
 
     message = result.message
     success = result.success
 
-    response = sim_tools.evaluate_design(design, experiment, end_event, CONTINUOUS_OPTIONS, INTEGER_OPTIONS, CATEGORY_OPTIONS, CONSTRAINTS, 1000, False, full_output=True)
+    
+
+    # evaluate the design on many terrains to guage its performance
+    experiment_holder.update_experiments(20)
+    successes = 0
+    total_time = 0
+    for experiment, end_event in experiment_holder.experiments:
+        result = sim_tools.evaluate_design(design, experiment, end_event, CONTINUOUS_OPTIONS, INTEGER_OPTIONS, CATEGORY_OPTIONS, CONSTRAINTS, 1000, full_output=True)
+        if result['success']:
+            successes += 1
+        total_time += result['time']
+    percent_success = successes / 20
+    avg_time = total_time / 20
+        
 
     print(f'scipy optimizer message: {message}')
     print(f'optimizer success: {success}')
     print('design', design)
     print('design_nums', design_nums)
 
+    print(f'percent success: {percent_success}')
+    print(f'avg time: {avg_time}')
+
     info_to_log = {
-        'time': response['time'],
-        'successful_mission': response['success'],
+        'time': avg_time,
+        'percent_success': percent_success,
         'design_nums': design_nums,
         'design': design,
         'optimizer_message': message,
     }
 
     logger.info(info_to_log)
-    submit_design_candidate(design_nums, design, response['time'], 'Phase 4/top_10_designs.json')
+    submit_design_candidate(design_nums, design,
+                            avg_time, 'Phase 4/top_10_designs.json')
+
 
 if __name__ == '__main__':
     logger.info('Starting optimization session...')
-    while True:
+    for i in range(10):
         try:
-            run_optimizer()
+            run_optimizer(50, 50)
         except Exception as e:
             logger.error(e)

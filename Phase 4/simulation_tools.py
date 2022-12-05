@@ -215,6 +215,16 @@ def simplified_evaluator_factory(experiment, end_event, continuous_options, inte
         return evaluate_design(design, experiment, end_event, continuous_options, integer_options, category_options, constraints, tmax, verbose)
     return evaluator
 
+def multi_terrain_evaluator_factory(experiment_holder: st.ExperimentHolder, continuous_options, integer_options, category_options, constraints, tmax=1000, verbose=False, full_output=False):
+    def evaluator(design_nums):
+        design = st.nums_to_design(design_nums, continuous_options, integer_options, category_options)
+        total_time = 0
+        for experiment, end_event in experiment_holder.experiments:
+            time = evaluate_design(design, experiment, end_event, continuous_options, integer_options, category_options, constraints, tmax, verbose, full_output)
+            total_time += time
+        return total_time
+    return evaluator
+
 
 if __name__ == '__main__':
     # define the experiment
@@ -231,16 +241,32 @@ if __name__ == '__main__':
     # nums, design = next(designer)
 
     design = {
-        'parachute_diameter': 14.851649725239756,
-        'fuel_mass': 147.4150356457363,
-        'wheel_radius': 0.545816607648071,
-        'gear_diameter': 0.05004778963177964,
-        'chassis_mass': 366.7390390128471,
-        'num_bat_modules': 16,
-        'motor_type': 'speed_he',
-        'battery_type': 'LiFePO4',
+        'parachute_diameter': 14.009163985800384,
+        'fuel_mass': 181.31447016782022,
+        'wheel_radius': 0.688371143604525,
+        'gear_diameter': 0.05044328094806457,
+        'chassis_mass': 264.63915675195926,
+        'num_bat_modules': 15,
+        'motor_type': 'speed',
+        'battery_type': 'NiMH',
         'chassis_material': 'steel'
     }
 
+    design_nums = [
+            0.0003903967023776711,
+            0.9178775026465614,
+            0.9984545636291741,
+            0.00022237290218479755,
+            0.013363873810114113,
+            0.45560638412083454,
+            0.7536689693441452,
+            0.18076712121647265,
+            0.11787956316768466
+        ]
+
     # evaluate the edl
-    time = evaluate_design(design, experiment, end_event,continuous_options, integer_options, category_options, constraints, verbose=True)
+    # time = evaluate_design(design, experiment, end_event,continuous_options, integer_options, category_options, constraints, verbose=True)
+    experiment_holder = st.ExperimentHolder()
+    evaluator = multi_terrain_evaluator_factory(experiment_holder, continuous_options, integer_options, category_options, constraints, tmax = 1000, verbose=True)
+    time = evaluator(design_nums)
+    print(time)

@@ -12,6 +12,64 @@ from rich import print
 import scipy
 from scipy.stats.qmc import LatinHypercube
 
+class ExperimentHolder():
+
+    __atr__ = ['alpha_dist', 'distribution_type', 'alpha_bounds', 'terrain_samples', 'experiments']
+
+    def __init__(self, alpha_dist = None, distribution_type = 'uniform', alpha_bounds = (-5, 20)):
+        self.alpha_dist = alpha_dist or np.array([0, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000])
+        self.distribution_type = distribution_type
+        self.alpha_bounds = alpha_bounds
+
+        self.update_experiments(5)
+
+    def update_experiments(self, num_samples):
+        """
+        Updates the terrain samples to be used in the optimization process.
+
+        Parameters:
+            num_samples (int): number of terrain samples to generate
+        """
+        terrain_samples = [self.generate_terrain() for _ in range(num_samples)]
+
+        experiments = []
+        for terrain in terrain_samples:
+            base_experiment, base_end_event = def_ex.experiment1()
+            base_experiment['alpha_deg'] = terrain['alpha_deg']
+            base_experiment['alpha_dist'] = terrain['alpha_dist']
+            experiments.append((base_experiment, base_end_event))
+        
+        self.experiments = experiments
+
+
+    def generate_terrain(self):
+        """
+        Generates a terrain map for the rover to traverse.
+
+        Parameters:
+            alpha_dist (list): list of floats representing the distances between the alpha values
+            distribution_type (str): type of distribution to use for the alpha values
+                uniform: uniform distribution
+                normal: normal distribution
+            alpha_bounds (tuple): tuple of floats representing the bounds for the alpha values
+
+        Returns:
+            terrain (dict): dictionary containing the terrain parameters
+        """
+        alpha_bounds = self.alpha_bounds
+        distribution_type = self.distribution_type
+        alpha_dist = self.alpha_dist
+
+        if alpha_dist is None:
+            alpha_dist = np.linspace(0, 1000, 11)
+        if distribution_type == 'uniform':
+            alpha_deg = np.random.uniform(alpha_bounds[0], alpha_bounds[1], len(alpha_dist))
+            return {'alpha_deg': alpha_deg, 'alpha_dist': alpha_dist}
+        elif distribution_type == 'normal':
+            alpha_deg = np.random.normal(np.mean(alpha_bounds), np.std(alpha_bounds), len(alpha_dist))
+            return {'alpha_deg': alpha_deg, 'alpha_dist': alpha_dist}
+        else:
+            raise ValueError(f'invalid distribution_type: {distribution_type}')
 
 def assemble_design(design: dict) -> dict:
     """
